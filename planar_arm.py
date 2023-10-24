@@ -135,6 +135,8 @@ class Arm_Controller:
             add_polygon_to_scene(p,self.ax,False)
 
 
+    # If signal set to false returns an array of booleans which are set to true if any part of the arm is colliding with something
+    # If signal set to true it returns an array of the polygons that the arm is colliding with
     def check_arm_collisions(self, signal=False):
         circles = [self.joint1,self.joint2,self.joint3]
         rectangles = np.array([Arm_Controller.get_rect_vertices(self.anchor1,self.rwid,self.rlen1,self.theta1 - pi/2),
