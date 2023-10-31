@@ -69,14 +69,14 @@ class Arm_Controller:
         show_scene(self.ax)
 
     #Draws the arm without adding it to the scene
-    def add_arm(self, color, collisions=[False]*5):
-        joint1 = patches.Circle(self.joint1, self.rad, fill=False, color=color)
-        rect1 = patches.Rectangle(self.anchor1,self.rwid,self.rlen1, fill=False,color=color)
+    def add_arm(self, collisions=[False]*5):
+        joint1 = patches.Circle(self.joint1, self.rad, fill=True, color='b')
+        rect1 = patches.Rectangle(self.anchor1,self.rwid,self.rlen1, fill=True,color='g')
         rect1.set_angle(degrees(self.theta1 - pi/2))
-        joint2 = patches.Circle(self.joint2,self.rad, fill=False,color=color)
-        rect2 = patches.Rectangle(self.anchor2,self.rwid, self.rlen2, fill=False,color=color)
+        joint2 = patches.Circle(self.joint2,self.rad, fill=True,color='b')
+        rect2 = patches.Rectangle(self.anchor2,self.rwid, self.rlen2, fill=True,color='g')
         rect2.set_angle(degrees(self.theta2 - pi/2))
-        joint3 = patches.Circle(self.joint3,self.rad,fill=False,color=color)
+        joint3 = patches.Circle(self.joint3,self.rad,fill=True,color='b')
         all_comp = [joint1,joint2,joint3,rect1,rect2]
         for i in range(len(collisions)):
             if collisions[i]:
