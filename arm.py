@@ -1,14 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
+from create_scene import create_plot, add_polygon_to_scene, load_polygons, show_scene
 
 class NLinkArm(object):
     """
     Class for controlling and plotting a planar arm with an arbitrary number of links.
     """
 
-    def __init__(self, link_lengths, joint_angles, joint_radius=0.1, link_width=0.1):
+    def __init__(self, link_lengths, joint_angles, joint_radius=0.1, link_width=0.1, polygons = []):
         self.n_links = len(link_lengths)
         if self.n_links != len(joint_angles):
             raise ValueError()
@@ -25,6 +25,8 @@ class NLinkArm(object):
         self.ax.set_xlim([0, 2])
         self.ax.set_ylim([0, 2])
         self.fig.canvas.mpl_connect('key_press_event', self.on_key)
+
+        self.polygons = polygons
 
         self.update_points()
         self.plot()
@@ -109,13 +111,20 @@ class NLinkArm(object):
             self.rotate_joint(2, 1)
         self.plot()
     
+    def set_arm_obs(self,polygons):
+        self.polygons=polygons
+
+    def set_obs_plot(self):
+        for p in self.polygons:
+            add_polygon_to_scene(p,self.ax,True)
+    
     def run(self):
         while not self.terminate:
             plt.pause(0.1)
 
     def plot(self):
         self.ax.clear()
-
+        self.set_obs_plot()
         for i in range(self.n_links):
             rectangle = self.draw_rectangle(self.points[i], self.points[i + 1])
             self.ax.plot(rectangle[:, 0], rectangle[:, 1], 'orange')
