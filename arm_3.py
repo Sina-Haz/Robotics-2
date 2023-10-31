@@ -1,4 +1,5 @@
 import argparse
+from arm import NLinkArm
 from planar_arm import Arm_Controller
 from math import radians
 from create_scene import create_plot
@@ -38,20 +39,21 @@ if __name__ == '__main__':
 
     # We discretize line segment in c-space according to resolution of 5 degrees
     discretized_pts = interpolate(args.start, args.goal, radians(5))
+    planar_arm = NLinkArm([0.3, 0.15], args.start, joint_radius=0.05, link_width=0.1)
 
-    fig, ax = plt.subplots(dpi=100)
-    planar_arm = Arm_Controller(args.start[0],args.start[1],ax)
-    
     for pt in discretized_pts:
-        planar_arm.theta1=pt[0]
-        planar_arm.theta2=pt[1]
-        planar_arm.re_orient()
-        planar_arm.draw_arm()
+        planar_arm.update_joints(pt) # Updates the joint angles and points
+        planar_arm.plot() # Redraws the updated points
+    plt.close()
+    print('finished')
+
 
 
 
     # anim = FuncAnimation(fig, update, frames=len(discretized_pts), fargs=(planar_arm,discretized_pts), repeat=False, blit=False)
-    # plt.show()    
+    # plt.show()
+
+    # Go to recitation 5, take a look at arm.py implementation
 
 
 

@@ -49,6 +49,7 @@ class Arm_Controller:
 
 
     def draw_arm(self, collisions=[False]*5):
+        self.ax.clear()
         joint1 = patches.Circle(self.joint1, self.rad, fill=True, color='b')
         rect1 = patches.Rectangle(self.anchor1,self.rwid,self.rlen1, fill=True,color='g')
         rect1.set_angle(degrees(self.theta1 - pi/2))

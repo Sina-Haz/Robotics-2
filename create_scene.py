@@ -47,6 +47,15 @@ def show_scene(ax):
     plt.grid(True)
     plt.show()
 
+# # Redraw the plot
+# def draw_scene(ax):
+#     ax.set_xlim(0,2)
+#     ax.set_ylim(0,2)
+#     ax.set_aspect('equal')
+#     plt.gca().set_aspect('equal', adjustable='box')  # Make sure the aspect ratio is equal
+#     plt.grid(True)
+#     plt.draw()
+
 def save_polygons(polygons, filename):
     np.save(filename,arr=polygons,allow_pickle=True)
 
