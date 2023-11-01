@@ -7,6 +7,7 @@ from create_scene import create_plot, add_polygon_to_scene, load_polygons, show_
 from planar_arm import Arm_Controller
 import matplotlib.pyplot as plt
 
+# Get's a sample and makes sure it doesn't cause a collision. The sample is stored in arm.theta1, arm.theta2
 def get_sample(arm):
     def sample():
         theta1 = random.random()*2*pi
@@ -33,15 +34,9 @@ if __name__=='__main__':
     planar_arm = Arm_Controller(0,0,ax, polygons=poly_map)
     planar_arm.set_obs_plot()
     get_sample(planar_arm)
-    planar_arm.add_arm()
+    planar_arm.add_arm(color = 'black')
     show_scene(ax)
-    # show_scene(ax)
 
-    # 
-    # 
-    # planar_arm.set_obs_plot()
-    # 
-    # planar_arm.draw_arm()
 
     
 

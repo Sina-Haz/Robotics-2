@@ -24,7 +24,7 @@ def generate_sample(arm, start, goal):
         arm.update_joints(pt) # Updates the joint angles and points
         arm.plot() # Redraws the updated points
     
-
+# Usage: python3 arm_4.py --start 0 0 --goal -2.9 0 --map "arm_polygons.npy"
 if __name__=='__main__':
     # This code gets us the inputs from the command line
     parser = argparse.ArgumentParser(description="arm_2.py will find the two configurations in the file that are closest to the target")

@@ -7,17 +7,23 @@ from planar_arm import Arm_Controller
 import numpy as np
     
 
+# We plot all pairs of thetas as arms in the C-Space, compute the distances of each from our arm
+# Sort and then return k closest pairs. This is done in O(nlogn) time
 def find_smallest_distances(pairs, ax, arm, k):
     arms = [Arm_Controller(theta1, theta2, ax, polygons=[]) for theta1, theta2 in pairs]
     distances = np.array([find_distance(x, arm) for x in arms])
     sorted_indices = np.argsort(distances)
     return pairs[sorted_indices[:k]] 
 
+# Distance between two arms is defined as sum of distance between their two joints
 def find_distance(arm1, arm2):
     d1 = sqrt((arm1.joint2[0] - arm2.joint2[0])**2 + (arm1.joint2[1] - arm2.joint2[1])**2)
     d2 = sqrt((arm1.joint3[0] - arm2.joint3[0])**2 + (arm1.joint3[1] - arm2.joint3[1])**2)
     return d1 + d2
+
 # Run the following command for output: python arm_2.py --target 0 0 -k 3 --configs "arm_configs.npy"
+# Basically we set our arm to be at the target configuration, and then we search other configurations in "arm_configs.npy"
+# To find the k nearest neighbors with a linear search
 if __name__=='__main__':
     # This code just gets us the name of the map from the command line
     parser = argparse.ArgumentParser(description="arm_2.py will find the two configurations in the file that are closest to the target")
@@ -32,7 +38,7 @@ if __name__=='__main__':
     param1, param2 = args.target
     planar_arm.theta1, planar_arm.theta2 = float(param1), float(param2)
     planar_arm.re_orient()
-    planar_arm.add_arm('b')
+    planar_arm.add_arm('b') # Original Target Arm
     configs = np.load(args.configs)
     param1, param2 = args.target
     smallest_distances = find_smallest_distances(configs, ax, planar_arm, int(args.k))

@@ -78,14 +78,14 @@ class Arm_Controller:
 
 
     #Draws the arm without adding it to the scene
-    def add_arm(self, collisions=[False]*5):
-        joint1 = patches.Circle(self.joint1, self.rad, fill=True, color='b')
-        rect1 = patches.Rectangle(self.anchor1,self.rwid,self.rlen1, fill=True,color='g')
+    def add_arm(self, color, collisions=[False]*5):
+        joint1 = patches.Circle(self.joint1, self.rad, fill=True, color=color)
+        rect1 = patches.Rectangle(self.anchor1,self.rwid,self.rlen1, fill=True,color=color)
         rect1.set_angle(degrees(self.theta1 - pi/2))
-        joint2 = patches.Circle(self.joint2,self.rad, fill=True,color='b')
-        rect2 = patches.Rectangle(self.anchor2,self.rwid, self.rlen2, fill=True,color='g')
+        joint2 = patches.Circle(self.joint2,self.rad, fill=True,color=color)
+        rect2 = patches.Rectangle(self.anchor2,self.rwid, self.rlen2, fill=True,color=color)
         rect2.set_angle(degrees(self.theta2 - pi/2))
-        joint3 = patches.Circle(self.joint3,self.rad,fill=True,color='b')
+        joint3 = patches.Circle(self.joint3,self.rad,fill=True,color=color)
         all_comp = [joint1,joint2,joint3,rect1,rect2]
         for i in range(len(collisions)):
             if collisions[i]:
@@ -229,6 +229,22 @@ class Arm_Controller:
         plt.ylabel("Theta 2")
         plt.title("Free C-Space")
         plt.show()
+
+    # Instead of showing the c-space it returns the occupancy grid which we use to plot the c-space
+    # Still need a way to easily get configuration angles, given a specific point on the grid or vice versa
+    def get_c_space(self):
+        occupancy_grid = np.zeros((100,100))
+
+        angles = np.linspace(-pi,pi, 100)
+
+        for i, theta1 in enumerate(angles):
+            for j, theta2 in enumerate(angles):
+                self.theta1,self.theta2=theta1,theta2
+                self.re_orient()
+                if any(self.check_arm_collisions()):
+                    occupancy_grid[i][j] = 1
+        return occupancy_grid #If grid @ (i, j) == 1, there's a collision, else no collision
+
 
 
 
