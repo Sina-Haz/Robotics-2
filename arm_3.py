@@ -2,7 +2,7 @@ import argparse
 from arm import NLinkArm
 from planar_arm import Arm_Controller
 from math import radians
-from create_scene import create_plot
+from create_scene import create_plot, show_scene
 from matplotlib.animation import FuncAnimation
 import matplotlib.pyplot as plt
 
@@ -56,6 +56,7 @@ if __name__ == '__main__':
         planar_arm.ax.cla()
         planar_arm.add_arm()
         planar_arm.ax.figure.canvas.draw()
+        show_scene(planar_arm.ax)
     # plt.close()
     print('finished')
 
