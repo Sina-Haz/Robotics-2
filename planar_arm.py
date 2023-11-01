@@ -32,7 +32,7 @@ class Arm_Controller:
         return(x,y)
     
 
-    def __init__(self,theta1,theta2,ax,polygons=[]):
+    def __init__(self,theta1,theta2,ax=create_plot(),polygons=[]):
         self.ax = ax
         self.joint1 = (1,1) #Center of the first circle
         self.rad = 0.05 #radius of all joints
@@ -46,6 +46,10 @@ class Arm_Controller:
         self.anchor2 = Arm_Controller.compute_rect_anchor(self.theta2, self.joint2, self.rad, self.rwid)
         self.joint3 = Arm_Controller.compute_circle_center(self.theta2,self.joint2,self.rad, self.rlen2)
         self.polygons=polygons
+
+
+    def set_joint_angles(self, angles):
+        self.theta1, self.theta2 = angles
 
 
     def draw_arm(self, collisions=[False]*5):
@@ -66,7 +70,12 @@ class Arm_Controller:
         self.ax.add_patch(joint2)
         self.ax.add_patch(rect2)
         self.ax.add_patch(joint3)
+        # self.ax.set_xlim([0, 2])
+        # self.ax.set_ylim([0, 2])
+        # plt.draw()
+        # plt.pause(1e-5)
         show_scene(self.ax)
+
 
     #Draws the arm without adding it to the scene
     def add_arm(self, collisions=[False]*5):
