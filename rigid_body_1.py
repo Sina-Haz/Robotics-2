@@ -6,18 +6,29 @@ import random
 from create_scene import create_plot, add_polygon_to_scene, load_polygons, show_scene
 from planar_arm import Arm_Controller
 import matplotlib.pyplot as plt
-from rigid_body import CarController, check_car_spawn
+import matplotlib.patches as patches
+from rigid_body import CarController, check_car
 
-def get_sample(arm):
-    def sample():
-        theta1 = random.random()*2*pi
-        theta2 = random.random()*2*pi
-        return theta1,theta2
-    while True:
-        arm.theta1, arm.theta2 = sample() # Get a sample
-        arm.re_orient() # Move robot to this configuration in workspace
-        collisions = arm.check_arm_collisions() # Get boolean array of parts that collide
-        if all(not collision for collision in collisions): break
+def make_rigid_body(center):
+    width = .2
+    height = .1
+    rectangle = patches.Rectangle(
+        (center[0] - width / 2, center[1] - height / 2),  # Lower-left corner
+        width,  # Width
+        height,  # Height
+        linewidth=1, edgecolor = 'r', facecolor = 'blue'  
+    )
+    return rectangle
+    
+def check_car_spawn( obstacles):
+    car = []
+    while(True):
+        x,y = random.uniform(0, 1), random.uniform(0, 1)
+        car = make_rigid_body((x,y))
+        print(car.get_xy())
+        if(check_car(car, obstacles)): break
+    return car
+
     
 
     
