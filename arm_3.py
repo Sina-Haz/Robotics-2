@@ -20,9 +20,10 @@ def interpolate(start, goal, resolution):
         y_i = slope*(x_i - x1) + y1
         points.append((x_i, y_i))
 
-    if points[-1] != goal:
+    if len(points)!=0 and points[-1] != goal:
         points.append(goal)
     return points
+
 
 def update(frame, arm, points):
     if frame < len(points):

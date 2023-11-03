@@ -4,7 +4,9 @@ from create_scene import create_plot, load_polygons
 import numpy as np
 import random
 import matplotlib.pyplot as plt
-from arm_2 import find_smallest_distances
+from arm_2 import find_distance
+from arm_3 import interpolate
+
 from typing import Callable
 
 pi = np.pi
@@ -32,20 +34,18 @@ class Roadmap_Node:
         self.roads = roads # This is a hashmap where key = config we have an edge to, value = list of discretized points
         # that start at current config and end at edge config
 
-
-
         
-# We map [-pi, pi] -> [0, 2pi] -> [0,1] -> [0, 100]
+"""# We map [-pi, pi] -> [0, 2pi] -> [0,1] -> [0, 100]
 def config_to_indices(theta1, theta2):
     i = int(((theta1 + pi) / (2 * pi)) * 100)
     j = int(((theta2 + pi) / (2 * pi)) * 100)
     return i, j
 
-# Undoing previous operations to map from [0, 100] -> [0, 1] -> [0, 2pi] -> [-pi, pi]
+""# Undoing previous operations to map from [0, 100] -> [0, 1] -> [0, 2pi] -> [-pi, pi]
 def indices_to_config(i, j):
     theta1 = (i / 100) * 2 * pi - pi
     theta2 = (j / 100) * 2 * pi - pi
-    return theta1, theta2
+    return theta1, theta2"""
 
 # Get's us theta in range [-pi, pi]
 def sample():
@@ -53,21 +53,34 @@ def sample():
     theta2 = (random.random()*2*pi) - pi
     return theta1,theta2
 
+# Getting k closest neighbors in T^2
+def get_k_neighbors(config, other_configs, k, dist_fn):
+    other_configs = np.array(other_configs)
+    t1,t2 = config
+    original = Arm_Controller(t1,t2)
+    others = [Arm_Controller(theta1, theta2) for theta1,theta2 in other_configs]
+    all_dist = np.array([dist_fn(x, original) for x in others])
+    sorted_indices = np.argsort(all_dist)
+    return other_configs[sorted_indices[:k]]
+
+def collides(planar_arm: Arm_Controller, config):
+    planar_arm.set_joint_angles(config)
+    planar_arm.re_orient()
+    return any(planar_arm.check_arm_collisions())
+
+
 # Returns a graph in adjacency list representation
-def PRM(iters: int, cspace: np.ndarray, neighbors: Callable, k: int, sampler: Callable, robot: object, collides: Callable, dist_fn: Callable,
-       config_to_ind: Callable, ind_to_config: Callable, discretize: Callable, startConfig: tuple, endConfig: tuple):
+def PRM(iters: int, neighbors: Callable, k: int, sampler: Callable, robot: object, collides: Callable, dist_fn: Callable,
+    discretize: Callable, startConfig: tuple, endConfig: tuple, config_lims:tuple, res: float):
     
     # We start off by creating a plot of the configuration space
     ax = create_plot()
-    cax = ax.matshow(cspace, cmap='coolwarm', vmin=0, vmax=1)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_title('Frame 0')
+    ax.set_xlim(config_lims[0], config_lims[1])
+    ax.set_ylim(config_lims[0], config_lims[1])
 
     Roadmap = {} # A hashmap where key = config, value = Roadmap_Node obj
     Roadmap[startConfig] = Roadmap_Node(startConfig, edges=[], roads={})
-    for i in range(1,iters+1):
-
+    for i in range(iters):
         # Want to occasionally sample the end configuration to see if we can reach it, we assume it doesnt collide with anything
         if random.random() < 0.05:
             config = endConfig
@@ -77,27 +90,33 @@ def PRM(iters: int, cspace: np.ndarray, neighbors: Callable, k: int, sampler: Ca
                 config = sampler() # sample a point
                 if not collides(robot, config): break
         
-        # Append this configuration to Graph, rn with no edges
-        Roadmap[config] = Roadmap_Node(config, edges = [], roads = {}) # Is this an issue now that sometimes config = endConfig???
-
-        # Mark this point in the cspace
-        ind = config_to_ind(config) # Needs to return a tuple n x 1 where len(basis of cspace) = n
-        cspace[ind] = 1
+        # Append this configuration to Graph if doesn't already exist
+        if Roadmap.get(config) == None:
+            Roadmap[config] = Roadmap_Node(config, edges = [], roads = {}) # Is this an issue now that sometimes config = endConfig???
 
         # To get closest neighbors we need a distance function that can compute distance between 2 configs
+        # We feed it current config, all other vertices, k number of neighbors we want, and a distance function
         neighborhood = neighbors(config, [x for x in Roadmap.keys() if x != config], k, dist_fn) # Should return a list of nearby configurations
         
         for q in neighborhood:
-            path = discretize(config, q) # Get a list of discretized configurations from sample to q
+            q = tuple(q)
+            path = discretize(config, q, res) # Get a list of discretized configurations from sample to q
             if all(not collides(robot, pt) for pt in path):
                 # Add edges between points, and also store the discretized path to get there
                 Roadmap[config].edges.append(q)
                 Roadmap[config].roads[q] = path
                 Roadmap[q].edges.append(config)
-                Roadmap[q].roads[config] = path[::-1] 
+                Roadmap[q].roads[config] = path[::-1]
+        # If any valid edges exist we can add this sample to the configuration space and its edges
+        if Roadmap[config].edges: 
+            x1,y1 = config
+            plt.scatter(x1, y1,c='g')
+            for edge in Roadmap[config].edges:
+                x2,y2 = edge
+                plt.plot([x1,x2], [y1,y2], c='g')
+            ax.figure.canvas.draw()
+    plt.show()
     return Roadmap
-
-    # Need to ask baichuan how we can visualize edges as line segments in the matrix
 
         
 
@@ -114,38 +133,26 @@ if __name__ == '__main__':
 
 
     planar_arm = Arm_Controller(0, 0, ax = create_plot(), polygons = poly_map)
-    planar_arm.set_obs_plot()
+    graph = PRM(1000, get_k_neighbors, 3, sample, planar_arm, collides, 
+                find_distance, interpolate, tuple(args.start), tuple(args.goal), [-pi, pi], np.radians(5))
 
-    # Our configuration space will be a discretized grid of 100*100
-    config_space = np.zeros((100, 100))
-    ax = create_plot()
-    cax = ax.matshow(config_space, cmap='coolwarm', vmin=0, vmax=1)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_title('Frame 0')
+    # planar_arm.set_obs_plot()
 
-    configs = [] #Store sampled configurations here
-    indices = []
-    for i in range(1,11):
-        try:
-            t1, t2 = sample()
-            r, c  = config_to_indices(t1,t2)
-            indices.append((r, c))
-            config_space[r][c] = 1
+    # # Our configuration space will be a discretized grid of 100*100
+    # # config_space = np.zeros((100, 100))
+    # ax = create_plot()
+    # ax.set_xlim(-pi, pi)
+    # ax.set_ylim(-pi, pi)
 
-
-            cax = ax.matshow(config_space, cmap='coolwarm', vmin=0, vmax=1)
-            ax.set_title(f'Frame {i}')
-            plt.pause(0.001)  # Adjust the pause duration as needed
-        except IndexError:
-            print(f'we tried to convert the following angles to indices: {(t1, t2)}')
-
-    # Need to go to Baichuan to ask him how we can visualize the edges
-    for i in range(8):
-        rand_ind1, rand_ind2 = random.randint(0, len(indices)-1), random.randint(0, len(indices)-1)
-        x1,y1 = indices[rand_ind1]
-        x2,y2 = indices[rand_ind2]
-        ax.plot([x1,x2], [y1,y2], color = 'red')
-    
-    plt.show()
+    # configs = [] #Store sampled configurations here
+    # for i in range(1,11):
+    #     t1,t2 = sample()
+    #     configs.append((t1,t2))
+    #     plt.scatter(t1, t2, c='g', label='Sampled Configurations')
+    #     plt.pause(1e-5)
+    # x1,y1 = configs[0]
+    # x2,y2 = configs[1]
+    # plt.plot([x1,x2], [y1,y2], c='g')
+    # ax.figure.canvas.draw()
+    # plt.show()
 
