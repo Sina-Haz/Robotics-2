@@ -32,7 +32,8 @@ class RTT():
     
     #Add point to nearest node. If goal node, return
     def addChild(self, x, y):
-        if (x == self.goal.x):
+        if x == self.goal.x and y == self.goal.y:
+            print("test")
             self.nearestNode.children.append(self.goal)
             self.goal.parent = self.nearestNode
         else:
@@ -100,7 +101,7 @@ class RTT():
         self.nearestDist = 10000
 
     def retracePath(self, goal):
-        if goal.x == self.randomTree.x:
+        if goal.x == self.randomTree.x and goal.y == self.randomTree.y:
             return
         self.numWaypoints += 1
         currentPoint = np.array([goal.x, goal.y])
@@ -118,14 +119,16 @@ def rtt_tree(start, goal,arm):
     ax.set_xlim(-pi,pi)
     ax.set_ylim(-pi,pi)
     rrt = RTT(start, goal, 1000, radians(5))
-    for i in range(1000):
+    i = 0
+    while i < 1000:
         rrt.resetNearestValues()
-        print("Iteration ", i)
         point = rrt.samplePoint(goal)
         rrt.findNearest(rrt.randomTree, point)
         new = rrt.goToPoint(rrt.nearestNode, point)
         bool = rrt.isInObstacle(rrt.nearestNode, new, arm)
         if bool == False:
+            print("Iteration ", i)
+            i += 1
             rrt.addChild(new[0], new[1])
             plt.pause(0.01)
             plt.plot([rrt.nearestNode.x, new[0]],[rrt.nearestNode.y, new[1]], 'go', linestyle="--")
@@ -133,6 +136,9 @@ def rtt_tree(start, goal,arm):
                 rrt.addChild(goal[0], goal[1])
                 print("Goal Found")
                 break
+        elif i == 0: 
+            print("Error: Start node in obstacle")
+            break
     plt.pause(1)
     rrt.retracePath(rrt.goal)
     rrt.Waypoints.insert(0, start)
