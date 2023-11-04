@@ -78,12 +78,7 @@ def check_car(car, obstacles):
 
 #Gets the coordinates for the car
 def get_coords(r1):
-    r = Affine2D().rotate_deg_around(r1.get_x(),r1.get_y(),r1.get_angle())
-    coords = np.array([r1.get_xy(), [r1.get_x()+r1.get_width(), r1.get_y()],
-                   [r1.get_x()+r1.get_width(), r1.get_y()+r1.get_height()],
-                   [r1.get_x(), r1.get_y()+r1.get_height()]]) 
-
-    return r.transform(coords)
+    return r1.get_corners()
 
 def collision_space(car, obstacles, ax):
     print(car)
@@ -98,7 +93,7 @@ def check_car_spawn(obstacles):
     car = []
     while(True):
         x,y = random.uniform(0, 1), random.uniform(0, 1)
-        car = patches.Rectangle((x,y),0.2,0.1,linewidth = 1, edgecolor = 'r', facecolor = 'blue')
+        car = patches.Rectangle((x,y),0.2,0.1,linewidth = 1, edgecolor = 'r', angle=0, rotation_point= 'center',facecolor = 'blue')
         if(check_car(car, obstacles)): break
     return car
 
@@ -110,7 +105,7 @@ def compute_minkowski_sum(A, B):
     return np.array(minkowski_sum)
        
 if __name__ == '__main__':
-    obstacles = np.load('2d_rigid_body.npy', allow_pickle=True)
+    obstacles = np.load('arm_polygons.npy', allow_pickle=True)
     ax = create_plot()
     for polygon in obstacles:
         add_polygon_to_scene(polygon,ax, 'blue')
