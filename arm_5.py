@@ -6,7 +6,7 @@ import random
 import matplotlib.pyplot as plt
 from arm_2 import find_distance
 from arm_3 import interpolate
-
+import heapq
 from typing import Callable
 
 pi = np.pi
@@ -114,9 +114,48 @@ def PRM(iters: int, neighbors: Callable, k: int, sampler: Callable, robot: objec
             for edge in Roadmap[config].edges:
                 x2,y2 = edge
                 plt.plot([x1,x2], [y1,y2], c='g')
-            ax.figure.canvas.draw()
+            if iters % 50 == 0:
+                ax.figure.canvas.draw()
+                plt.pause(1e-6)
     plt.show()
+    plt.close(ax.figure)
     return Roadmap
+
+# Assumes a graph which is a hashmap of Roadmap_Node objects
+def A_star(startConfig, goalConfig, Graph, dist_fn):
+    def arm_dist(config1, config2):
+        x1,y1 = config1
+        x2,y2 = config2
+        arm1 = Arm_Controller(x1,y1)
+        arm2 = Arm_Controller(x2,y2)
+        return dist_fn(arm1,arm2)
+    
+    def h(config):
+        return arm_dist(config, goalConfig)
+    
+    def get_path(config):
+        path = []
+        while parents[config]:
+            path.append(parents[config])
+            config = parents[config]
+        return path[::-1]
+    
+    distances = {startConfig:0}
+    parents = {startConfig:None}
+    fringe = [(h(startConfig), startConfig)] #PQ, stores tuples (priority = dist + heuristic, configuration)
+    while fringe:
+        curr = heapq.heappop(fringe)
+        if curr[1] == goalConfig:
+            return True, get_path(curr[1])
+
+        for child in Graph[curr[1]].edges:
+            tmpDist = distances[curr[1]] + arm_dist(curr[1], child)
+            if child not in distances or tmpDist < distances[child]:
+                distances[child] = tmpDist
+                parents[child] = curr[1]
+                fringe.append((tmpDist+h(child), child))
+    return False, []
+
 
         
 
@@ -133,8 +172,30 @@ if __name__ == '__main__':
 
 
     planar_arm = Arm_Controller(0, 0, ax = create_plot(), polygons = poly_map)
-    graph = PRM(1000, get_k_neighbors, 3, sample, planar_arm, collides, 
-                find_distance, interpolate, tuple(args.start), tuple(args.goal), [-pi, pi], np.radians(5))
+    graph = PRM(100, get_k_neighbors, 3, sample, planar_arm, collides, 
+                find_distance, interpolate, tuple(args.start), tuple(args.goal), [-pi, pi], np.radians(8))
+    
+    var, path = A_star(tuple(args.start),tuple(args.goal), graph, find_distance)
+    if var:
+        all_points = []
+        for i in range(len(path)-1):
+            curr = path[i]
+            next = path[i+1]
+            road_to_next = graph[curr].roads[next]
+            all_points += road_to_next
+        planar_arm = Arm_Controller(args.start[0], args.start[1], ax = create_plot(), polygons=poly_map)
+        planar_arm.set_obs_plot()
+        planar_arm.draw_arm()
+        for pt in all_points:
+            planar_arm.set_joint_angles(pt)
+            planar_arm.re_orient()
+            planar_arm.ax.cla()
+            planar_arm.draw_arm()
+            planar_arm.ax.figure.canvas.draw()
+            plt.pause(1e-4)
+        # plt.close()
+        print('finished')
+        
 
     # planar_arm.set_obs_plot()
 
