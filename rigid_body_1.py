@@ -31,9 +31,7 @@ def check_car_spawn( obstacles):
 
     
 
-    
-
-# Run the following command for output: python rigid_body_1.py --map "rigid_polygons.npy"
+# Run the following command for output: python3 rigid_body_1.py --map "rigid_polygons.npy"
 if __name__=='__main__':
     # This code just gets us the name of the map from the command line
     parser = argparse.ArgumentParser(description="car_1.py will draw a random collision free configuration of the robot given a workspace")

@@ -19,17 +19,12 @@ def interpolate(start, goal, resolution):
     for x_i in xs:
         y_i = slope*(x_i - x1) + y1
         points.append((x_i, y_i))
-
+    
     if len(points)!=0 and points[-1] != goal:
         points.append(goal)
     return points
 
 
-def update(frame, arm, points):
-    if frame < len(points):
-        arm.theta1, arm.theta2 = points[frame]
-        arm.re_orient()
-        arm.draw_arm()
 
 # Usage: python3 arm_3.py --start 0 0 --goal 2 2
 if __name__ == '__main__':

@@ -118,7 +118,6 @@ def PRM(iters: int, neighbors: Callable, k: int, sampler: Callable, robot: objec
                 ax.figure.canvas.draw()
                 plt.pause(1e-6)
     plt.show()
-    plt.close(ax.figure)
     return Roadmap
 
 # Assumes a graph which is a hashmap of Roadmap_Node objects
@@ -192,7 +191,7 @@ if __name__ == '__main__':
             planar_arm.ax.cla()
             planar_arm.draw_arm()
             planar_arm.ax.figure.canvas.draw()
-            plt.pause(1e-4)
+            plt.pause(1e-3)
         # plt.close()
         print('finished')
         

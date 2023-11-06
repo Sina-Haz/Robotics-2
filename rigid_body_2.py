@@ -18,14 +18,17 @@ def find_distance(car1, car2):
     angular_distance = abs(car1[2] % pi - car2[2] % pi)
     alpha = 0.7
     return alpha * linear_distance + (1-alpha) * angular_distance
-# Run the following command for output: python arm_2.py --target 0 0 -k 3 --configs "arm_configs.npy"
+
+
+# Run the following command for output: python3 rigid_body_2.py --target 1 1 0 --k 3 --configs "rigid_configs.npy"
 if __name__=='__main__':
     # This code just gets us the name of the map from the command line
     parser = argparse.ArgumentParser(description="arm_2.py will find the two configurations in the file that are closest to the target")
     parser.add_argument('--configs', required=True, help='Path to the config file (e.g., "arm_configs.npy")')
-    parser.add_argument('-k', type=int, required=True, )
+    parser.add_argument('--k', type=int, required=True, )
     parser.add_argument('--target', type=float, nargs=3, required=True, help='target orientation')
     args = parser.parse_args()
+    
     ax = create_plot()
     x,y, theta = args.target
     configs = np.load(args.configs)
