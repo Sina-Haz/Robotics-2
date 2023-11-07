@@ -4,7 +4,6 @@ import random
 from arm import NLinkArm
 from create_scene import create_plot, add_polygon_to_scene, load_polygons, show_scene
 from arm_1 import get_sample
-from arm_3 import interpolate
 from planar_arm import Arm_Controller, angle_mod
 import numpy as np
 import matplotlib.pyplot as plt
@@ -33,7 +32,6 @@ class RTT():
     #Add point to nearest node. If goal node, return
     def addChild(self, x, y):
         if x == self.goal.x and y == self.goal.y:
-            print("test")
             self.nearestNode.children.append(self.goal)
             self.goal.parent = self.nearestNode
         else:
@@ -127,7 +125,6 @@ def rtt_tree(start, goal,arm):
         new = rrt.goToPoint(rrt.nearestNode, point)
         bool = rrt.isInObstacle(rrt.nearestNode, new, arm)
         if bool == False:
-            print("Iteration ", i)
             i += 1
             rrt.addChild(new[0], new[1])
             plt.pause(0.01)
@@ -156,20 +153,37 @@ def rtt_tree(start, goal,arm):
 
 def arm_graph(start,arm, waypoints):
     begin = start
-    for i in range(len(waypoints) ):
+    for i in range(len(waypoints)):
         move_arm(arm, begin, waypoints[i])
         begin = waypoints[i]
 
+def interpolate(start, goal, resolution):
+    # Get equation for the line as such: y - y1 = m(x - x1), solve for m
+    x1,y1 = start
+    x2,y2 = goal
+    slope = (y2-y1)/(x2-x1)
+    points = []
+    num_points = abs(int((x2-x1)/resolution + 1))
+    xs = [x1 + i*resolution for i in range(num_points)]
+
+    for x_i in xs:
+        y_i = slope*(x_i - x1) + y1
+        points.append((x_i, y_i))
+    
+    if points[:-1] != goal:
+        points.append(goal)
+    return points
 
 def move_arm(arm, start, goal):
     discretized_pts = interpolate(start, (goal[0], goal[1]), radians(5))
     for pt in discretized_pts:
+        print(pt)
         arm.set_joint_angles(pt)
         arm.re_orient()
         arm.ax.cla()
         arm.draw_arm()
         arm.ax.figure.canvas.draw()
-    
+
 
 if __name__=='__main__':
     # This code gets us the inputs from the command line
@@ -197,5 +211,3 @@ if __name__=='__main__':
     planar_arm.set_obs_plot()
     generate_sample(planar_arm, args.start, args.goal)
     '''
-
-
