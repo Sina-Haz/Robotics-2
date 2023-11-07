@@ -50,11 +50,10 @@ if __name__ == '__main__':
     parser.add_argument('--goal', nargs=3, type=float, required=True, help='Goal configuration, give 3 floats in radians, x and y and then a theta in range [-pi, pi]')
     args = parser.parse_args()
 
-    fig,ax = plt.subplots()
     discretized_pts = interpolate(args.start, args.goal, 0.05)
+    plt.close('all')
     rig_body = CarController(ax = create_plot(), car = make_rigid_body((args.start[:2])), obstacles=[])
     rig_body.car.set_angle(degrees(args.start[2]))
-    show_scene(rig_body.ax)
     for pt in discretized_pts:
         reposition_car(pt, rig_body)
         rig_body.ax.cla()
