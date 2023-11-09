@@ -11,7 +11,7 @@ def get_slope_vector(pt1, pt2):
     magnitude = sqrt(sum(x**2 for x in direction))
     return tuple(x/magnitude for x in direction)
 
-def reposition_car(config, car: CarController):
+def reposition_car(config, car):
     x,y,theta = config
     new_car = make_rigid_body((x,y))
     car.car.set_x(new_car.get_x())
@@ -25,15 +25,18 @@ def interpolate(start, goal, resP = 0.05, resA = radians(5)):
     x2,y2,t2 = goal
     euclidean_dist = sqrt((x2-x1)**2 + (y2-y1)**2)  #Find Euclidean distance
     points = []
+    points.append((x1,y1,t1))
     angle = atan((y2-y1)/(x2-x1))       #Find angle between start and goal nodes
     num_angles = int((angle-t1)/resA)    #Set the rigid body to that angle before moving
+    curr_angle = t1
     for i in range(abs(num_angles)):
         if angle > t1:
-            points.append((x1,y1,angle_mod(t1+resA)))
+            curr_angle = curr_angle+resA
+            points.append((x1,y1,angle_mod(curr_angle)))
         else:
-            points.append((x1,y1,angle_mod(t1-resA)))
+            curr_angle = curr_angle-resA
+            points.append((x1,y1,angle_mod(curr_angle)))
     points.append((x1,y1,angle))
-
     num_points = int(euclidean_dist / resP)
     for i in range(num_points+1):
         t = 0
@@ -43,11 +46,14 @@ def interpolate(start, goal, resP = 0.05, resA = radians(5)):
         y_i = (1-t)*y1 + t*y2
         points.append((x_i, y_i, angle))
     angle_to_goal = int((t2-angle)/resA)       #Find angle between that angle and goal
+    curr_angle = angle
     for i in range(abs(angle_to_goal)):
         if t2 > angle:
-            points.append((x2,y2,angle_mod(angle+resA)))
+            curr_angle = curr_angle + resA
+            points.append((x2,y2,angle_mod(curr_angle)))
         else:
-            points.append((x2,y2,angle_mod(angle-resA)))
+            curr_angle = curr_angle - resA
+            points.append((x2,y2,angle_mod(curr_angle)))
     points.append((x2, y2, t2))
     return points
 
