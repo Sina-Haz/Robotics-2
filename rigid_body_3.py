@@ -1,8 +1,9 @@
 import argparse
-from math import sqrt, pi, degrees
+from math import sqrt, pi, degrees, radians, atan
 from rigid_body import CarController
 from create_scene import create_plot, show_scene
 from rigid_body_1 import make_rigid_body
+from planar_arm import angle_mod
 import matplotlib.pyplot as plt
 
 def get_slope_vector(pt1, pt2):
@@ -19,27 +20,29 @@ def reposition_car(config, car: CarController):
 
 
 
-def interpolate(start, goal, res):
+def interpolate(start, goal, resP = 0.05, resA = radians(10)):
     x1,y1,t1 = start
     x2,y2,t2 = goal
-
-    euclidean_dist = sqrt((x2-x1)**2 + (y2-y1)**2)
-
-    # Use wrap around to keep theta in range [-pi, pi]
-    delta_theta = t2 - t1
-    if delta_theta > pi:
-        delta_theta -= 2*pi
-    elif delta_theta < -pi:
-        delta_theta += 2*pi
-
-    num_points = int(max(euclidean_dist, delta_theta) / res)
+    euclidean_dist = sqrt((x2-x1)**2 + (y2-y1)**2)  #Find Euclidean distance
     points = []
+    angle = atan((y2-y1)/(x2-x1))       #Find angle between start and goal nodes
+    num_angles = int((angle-t1)/resA)    #Set the rigid body to that angle before moving
+    for i in range(num_angles):
+        points.append((x1,y1,t1+resA))
+    points.append((x1,y1,angle))
+
+    num_points = int(euclidean_dist / resP)
     for i in range(num_points+1):
-        t = i/num_points
+        t = 0
+        if num_points != 0:
+            t = i/num_points
         x_i = (1-t)*x1 + t*x2
         y_i = (1-t)*y1 + t*y2
-        t_i = (1-t)*t1 + t*t2
-        points.append((x_i, y_i, t_i))
+        points.append((x_i, y_i, angle))
+    angle_to_goal = int((t2-angle)/resA)       #Find angle between that angle and goal
+    for i in range(angle_to_goal):
+        points.append((x2,y2,angle+resA))
+    points.append((x2, y2, t2))
     return points
 
 
@@ -61,7 +64,7 @@ if __name__ == '__main__':
         rig_body.ax.set_xlim([0,2])
         rig_body.ax.add_patch(rig_body.car)
         plt.draw()
-        plt.pause(1e-5)
+        plt.pause(.1)
         rig_body.ax.figure.canvas.draw()
     print('finished')
     
