@@ -20,15 +20,18 @@ def reposition_car(config, car: CarController):
 
 
 
-def interpolate(start, goal, resP = 0.05, resA = radians(10)):
+def interpolate(start, goal, resP = 0.05, resA = radians(5)):
     x1,y1,t1 = start
     x2,y2,t2 = goal
     euclidean_dist = sqrt((x2-x1)**2 + (y2-y1)**2)  #Find Euclidean distance
     points = []
     angle = atan((y2-y1)/(x2-x1))       #Find angle between start and goal nodes
     num_angles = int((angle-t1)/resA)    #Set the rigid body to that angle before moving
-    for i in range(num_angles):
-        points.append((x1,y1,t1+resA))
+    for i in range(abs(num_angles)):
+        if angle > t1:
+            points.append((x1,y1,angle_mod(t1+resA)))
+        else:
+            points.append((x1,y1,angle_mod(t1-resA)))
     points.append((x1,y1,angle))
 
     num_points = int(euclidean_dist / resP)
@@ -40,8 +43,11 @@ def interpolate(start, goal, resP = 0.05, resA = radians(10)):
         y_i = (1-t)*y1 + t*y2
         points.append((x_i, y_i, angle))
     angle_to_goal = int((t2-angle)/resA)       #Find angle between that angle and goal
-    for i in range(angle_to_goal):
-        points.append((x2,y2,angle+resA))
+    for i in range(abs(angle_to_goal)):
+        if t2 > angle:
+            points.append((x2,y2,angle_mod(angle+resA)))
+        else:
+            points.append((x2,y2,angle_mod(angle-resA)))
     points.append((x2, y2, t2))
     return points
 

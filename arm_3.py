@@ -47,6 +47,7 @@ if __name__ == '__main__':
     planar_arm = Arm_Controller(args.start[0], args.start[1])
     planar_arm.draw_arm()
     for pt in discretized_pts:
+        print(pt)
         planar_arm.set_joint_angles(pt)
         planar_arm.re_orient()
         planar_arm.ax.cla()
@@ -54,13 +55,3 @@ if __name__ == '__main__':
         planar_arm.ax.figure.canvas.draw()
     # plt.close()
     print('finished')
-
-
-
-
-
-
-
-
-    
-

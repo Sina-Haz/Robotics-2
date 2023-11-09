@@ -1,27 +1,28 @@
 import argparse
-from math import pi, radians, floor
+from math import pi, radians, floor, sqrt
 import random
-from arm import NLinkArm
+from rigid_body import CarController, check_car
 from create_scene import create_plot, add_polygon_to_scene, load_polygons, show_scene
-from arm_1 import get_sample
-from arm_3 import interpolate
-from planar_arm import Arm_Controller, angle_mod
+from rigid_body_1 import make_rigid_body
+from rigid_body_3 import interpolate, reposition_car
+from planar_arm import angle_mod
 import numpy as np
 import matplotlib.pyplot as plt
 
 #represents a node that is plotted on the tree graph.
 class treeNode:
-    def __init__(self, x, y):
-        self.x = x #angle of first arm in radians
-        self.y = y  #angle of second arm in radians
+    def __init__(self, x, y, theta):
+        self.x = x #x coord 
+        self.y = y  #ycoord
+        self.theta = theta  #angle of rigid body
         self.children = []    #all neighboring nodes
         self.parent = None     
 
 #Represents the entire RRT tree
 class RTT():
     def __init__(self, start, goal, iterations, stepSize):
-        self.randomTree = treeNode(start[0], start[1])  
-        self.goal = treeNode(goal[0], goal[1])
+        self.randomTree = treeNode(start[0], start[1], start[2])  
+        self.goal = treeNode(goal[0], goal[1], goal[2])
         self.nearestNode = None
         self.iterations = min(iterations, 1000)
         self.rho = stepSize
@@ -31,49 +32,44 @@ class RTT():
         self.Waypoints = []
     
     #Add point to nearest node. If goal node, return
-    def addChild(self, x, y):
-        if x == self.goal.x and y == self.goal.y:
+    def addChild(self, x, y, theta):
+        if x == self.goal.x and y == self.goal.y and theta == self.goal.theta:
             print("test")
             self.nearestNode.children.append(self.goal)
             self.goal.parent = self.nearestNode
         else:
-            tempNode = treeNode(x, y)
+            tempNode = treeNode(x, y, theta)
             self.nearestNode.children.append(tempNode)
             tempNode.parent = self.nearestNode
     
     #Samples a random point between -pi and pi. Occasionally samples the goal node with a 5% probability
     def samplePoint(self, goal):
-        x = random.uniform(-pi, pi)
-        y = random.uniform(-pi, pi)
+        x = random.uniform(0,2)
+        y = random.uniform(0,2)
+        theta = random.uniform(-pi, pi)
         prob = random.uniform(0, 1)
         if prob < 0.9:
-            return np.array([x,y])
+            return np.array([x,y, theta])
         else:
             return np.array(goal)
     
     #Travels the direction of the sampled node with the given step size
     def goToPoint(self, start, end):
         offset = self.rho*self.unitVector(start, end)
-        point = np.array([start.x + offset[0], start.y + offset[1]])
+        point = np.array([start.x + offset[0], start.y + offset[1], start.theta + offset[2]])
         return point
     
     #checks whether the node on the graph corresponds to a collision in the arm.
-    def isInObstacle(self, start, end, arm):
+    def isInObstacle(self, start, end, obstacles):
         u_hat = self.unitVector(start, end)
-        test = np.array([0.0,0.0])
-        for i in range(floor(self.rho/radians(5))):
-            test[0] = start.x + i* u_hat[0]
-            test[1] = start.y + i * u_hat[1]
-            #check if arm in obstacle
-            arm.theta1, arm.theta2 = test[0], test[1] 
-            arm.re_orient() # Move robot to this configuration in workspace
-            collisions = arm.check_arm_collisions() # Get boolean array of parts that collide
-            if any(collision for collision in collisions): 
-                return True
+        points = interpolate((start.x, start.y, start.theta), (u_hat[0], u_hat[1], u_hat[2]))
+        for point in points:
+            if not check_car(make_rigid_body((point[0], point[1]), point[2]), obstacles):
+                return True   
         return False
     
     def unitVector(self, start, end):
-        v = np.array([end[0] - start.x, end[1] - start.y])
+        v = np.array([end[0] - start.x, end[1] - start.y, end[2] - start.theta])
         u_hat = v/np.linalg.norm(v)
         return u_hat
     
@@ -88,7 +84,11 @@ class RTT():
             self.findNearest(child,point)
 
     def distance(self, node1,point):
-        dist = np.sqrt((node1.x - point[0])**2 + (node1.y - point[1])**2)
+        #dist = np.sqrt((node1.x - point[0])**2 + (node1.y - point[1])**2)
+        linear_distance = sqrt((node1.x - point[0])**2 + (node1.y- point[1])**2)
+        angular_distance = abs(angle_mod(node1.theta)- angle_mod(point[2]))
+        alpha = 0.8
+        dist = alpha * linear_distance + (1-alpha) * angular_distance
         return dist
     
     def goalFound(self, point):
@@ -101,44 +101,40 @@ class RTT():
         self.nearestDist = 10000
 
     def retracePath(self, goal):
-        if goal.x == self.randomTree.x and goal.y == self.randomTree.y:
+        if goal.x == self.randomTree.x and goal.y == self.randomTree.y and goal.theta == self.randomTree.theta:
             return
         self.numWaypoints += 1
-        currentPoint = np.array([goal.x, goal.y])
+        currentPoint = np.array([goal.x, goal.y, goal.theta])
         self.Waypoints.insert(0,currentPoint)
         self.path_distance += self.rho
         self.retracePath(goal.parent)
         
     
 
-def rtt_tree(start, goal,arm):
+def rtt_tree(start, goal, obstacles):
     plt.close('all')
     fig = plt.figure("RTT Algorithm")
-    plt.plot(start[0], start[1], 'ro')
+    plt.plot(start[0], start[1], 'ro', alpha=0.1)
     ax = fig.gca()
-    ax.set_xlim(-pi,pi)
-    ax.set_ylim(-pi,pi)
-    rrt = RTT(start, goal, 1000, radians(5))
+    ax.set_xlim(0,2)
+    ax.set_ylim(0,2)
+    rrt = RTT(start, goal, 1000, .2)
     i = 0
     while i < 1000:
         rrt.resetNearestValues()
         point = rrt.samplePoint(goal)
         rrt.findNearest(rrt.randomTree, point)
         new = rrt.goToPoint(rrt.nearestNode, point)
-        bool = rrt.isInObstacle(rrt.nearestNode, new, arm)
+        bool = rrt.isInObstacle(rrt.nearestNode, new, obstacles)
         if bool == False:
-            print("Iteration ", i)
             i += 1
-            rrt.addChild(new[0], new[1])
-            plt.pause(0.01)
+            plt.pause(0.001)
             plt.plot([rrt.nearestNode.x, new[0]],[rrt.nearestNode.y, new[1]], 'go', linestyle="--")
+            rrt.addChild(new[0], new[1], new[2])
             if rrt.goalFound(new):
-                rrt.addChild(goal[0], goal[1])
+                rrt.addChild(goal[0], goal[1], goal[2])
                 print("Goal Found")
                 break
-        elif i == 0: 
-            print("Error: Start node in obstacle")
-            break
     plt.pause(1)
     rrt.retracePath(rrt.goal)
     rrt.Waypoints.insert(0, start)
@@ -147,46 +143,47 @@ def rtt_tree(start, goal,arm):
     plt.pause(1)
     plt.close()
     fig,ax = plt.subplots(dpi=100)
-    arm = Arm_Controller(start[0], start[1], ax)
-    arm.set_arm_obs(poly_map)
-    arm.set_obs_plot()
-    arm.theta1, arm.theta2 = start
-    arm_graph(start, arm, rrt.Waypoints)
+    rig_body = CarController(ax, car = make_rigid_body(start), obstacles=[])
+    rigid_graph(start, rig_body, rrt.Waypoints, obstacles)
 
 
-def arm_graph(start,arm, waypoints):
+def rigid_graph(start,rig_body, waypoints, obstacles):
     begin = start
-    for i in range(len(waypoints) ):
-        move_arm(arm, begin, waypoints[i])
+    for i in range(1, len(waypoints)):
+        print(waypoints[i])
+        move_rigid(rig_body, begin, waypoints[i], obstacles)
         begin = waypoints[i]
 
 
-def move_arm(arm, start, goal):
-    discretized_pts = interpolate(start, (goal[0], goal[1]), radians(5))
+def move_rigid(rig_body, start, goal, obstacles):
+    discretized_pts = interpolate(start, goal, 0.01)
     for pt in discretized_pts:
-        arm.set_joint_angles(pt)
-        arm.re_orient()
-        arm.ax.cla()
-        arm.draw_arm()
-        arm.ax.figure.canvas.draw()
+        reposition_car(pt, rig_body)
+        rig_body.ax.cla()
+        rig_body.set_obstacles(obstacles)
+        rig_body.ax.set_ylim([0,2])
+        rig_body.ax.set_xlim([0,2])
+        rig_body.ax.add_patch(rig_body.car)
+        plt.draw()
+        plt.pause(1e-5)
+        rig_body.ax.figure.canvas.draw()
     
 
 if __name__=='__main__':
     # This code gets us the inputs from the command line
     parser = argparse.ArgumentParser(description="arm_2.py will find the two configurations in the file that are closest to the target")
-    parser.add_argument('--start', type=float, nargs=2, required=True, help='start orientation')
+    parser.add_argument('--start', type=float, nargs=3, required=True, help='start orientation')
     parser.add_argument('--map', required=True, )
-    parser.add_argument('--goal', type=float, nargs=2, required=True, help='target orientation')
+    parser.add_argument('--goal', type=float, nargs=3, required=True, help='target orientation')
     args = parser.parse_args()
     
     #get the parameters from the parser
-    start1, start2 = angle_mod(args.start[0]), angle_mod(args.start[1])
-    goal1, goal2 = angle_mod(args.goal[0]), angle_mod(args.goal[1])
+    start1, start2, theta1 = args.start[0], args.start[1], angle_mod(args.start[2])
+    goal1, goal2, theta2 = args.goal[0], args.goal[1], angle_mod(args.goal[2])
     poly_map = load_polygons(args.map)
     
-    planar_arm = Arm_Controller(start1, start2)
-    planar_arm.set_arm_obs(poly_map)
-    rtt_tree(np.array([start1, start2]), np.array([goal1, goal2]), planar_arm)
+
+    rtt_tree(np.array([start1, start2, theta1]), np.array([goal1, goal2, theta2]), poly_map)
 
     
 
