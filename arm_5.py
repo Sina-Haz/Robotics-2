@@ -92,7 +92,7 @@ def PRM(iters: int, neighbors: Callable, k: int, sampler: Callable, robot: objec
         
         # Append this configuration to Graph if doesn't already exist
         if Roadmap.get(config) == None:
-            Roadmap[config] = Roadmap_Node(config, edges = [], roads = {}) # Is this an issue now that sometimes config = endConfig???
+            Roadmap[config] = Roadmap_Node(config, edges = [], roads = {}) 
 
         # To get closest neighbors we need a distance function that can compute distance between 2 configs
         # We feed it current config, all other vertices, k number of neighbors we want, and a distance function

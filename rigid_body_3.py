@@ -10,7 +10,7 @@ def get_slope_vector(pt1, pt2):
     magnitude = sqrt(sum(x**2 for x in direction))
     return tuple(x/magnitude for x in direction)
 
-def reposition_car(config, car):
+def reposition_car(config, car: CarController):
     x,y,theta = config
     new_car = make_rigid_body((x,y))
     car.car.set_x(new_car.get_x())
