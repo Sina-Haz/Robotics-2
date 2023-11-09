@@ -83,6 +83,13 @@ def k_nearest_neighbors(root, query_point, k):
 # We plot all pairs of thetas as arms in the C-Space, compute the distances of each from our arm
 # Sort and then return k closest pairs. This is done in O(nlogn) time
 def find_smallest_distances(pairs, ax, arm, k):
+    arms = [Arm_Controller(theta1, theta2, ax, polygons=[]) for theta1, theta2 in pairs]
+    distances = np.array([find_distance(x, arm) for x in arms])
+    sorted_indices = np.argsort(distances)
+    return pairs[sorted_indices[:k]] 
+
+
+def find_smallest_distances_kd(pairs, ax, arm, k):
     tree = kd_tree(pairs.tolist())
     nearest_points = k_nearest_neighbors(tree, (arm.theta1, arm.theta2), k)
     return nearest_points
