@@ -5,15 +5,87 @@ import random
 from create_scene import create_plot, add_polygon_to_scene, load_polygons, show_scene
 from planar_arm import Arm_Controller
 import numpy as np
+from queue import PriorityQueue
     
+# KD-Tree Node class
+class Node:
+    def __init__(self, point, split_dim):
+        self.point = point
+        self.split_dim = split_dim
+        self.left = None
+        self.right = None
 
+# KD-Tree construction
+def kd_tree(points, depth=0):
+    if len(points) == 0:
+        return None
+
+    k = len(points[0])
+    split_dim = depth % k
+
+    # Note that it is not required to select the median point, In the case where median points are not selected, there is no guarantee that the tree will be balanced.
+    points.sort(key=lambda x: x[split_dim])
+    median = len(points) // 2
+
+    node = Node(points[median], split_dim)
+    node.left = kd_tree(points[:median], depth + 1)
+    node.right = kd_tree(points[median + 1:], depth + 1)
+    return node
+
+def k_nearest_neighbors(root, query_point, k):
+    pq = PriorityQueue()
+
+    def search(node):
+        nonlocal pq  # Make pq accessible within the nested function
+        if node is None:
+            return
+
+        # Calculate distance
+        dist = np.linalg.norm(np.array(query_point) - np.array(node.point))
+
+        # Add to priority queue
+        # used -dist for the distance metric in the priority queue. 
+        # Therefore, the queue will now pop the element with the largest negative distance, 
+        # which is the farthest point among the k closest points.
+        if len(pq.queue) < k:
+            pq.put((-dist, node.point))
+        else:
+            if -dist > pq.queue[0][0]:
+                pq.get()
+                pq.put((-dist, node.point))
+
+        # Recursive search on child nodes
+        split_dim = node.split_dim
+        diff = query_point[split_dim] - node.point[split_dim]
+
+        # If diff <= 0, it means that the query point lies on the 'left' side of the current node along that dimension. 
+        # Thus, the 'left' subtree (i.e., node.left) becomes the primary search space, 
+        # and the 'right' subtree (i.e., node.right) becomes the secondary one. The reverse is true if diff > 0.
+        if diff <= 0:
+            first, second = node.left, node.right
+        else:
+            first, second = node.right, node.left
+
+        search(first)
+
+        # abs(diff) < -pq.queue[0][0]: This is a pruning step. Recall that -pq.queue[0][0] is the smallest (negative) 
+        # distance in the priority queue, i.e., the distance to the farthest point among the k closest points found so far. 
+        # If abs(diff) is smaller than this distance, it means that there may exist points in the second subtree 
+        # that are closer to the query point than the farthest point in the current set of k closest points. 
+        # Therefore, it is necessary to explore the second subtree.
+        if len(pq.queue) < k or abs(diff) < -pq.queue[0][0]:
+            search(second)
+
+    search(root)
+    neighbors = [point for dist, point in sorted(pq.queue, key=lambda x: x[0], reverse=True)]
+
+    return neighbors
 # We plot all pairs of thetas as arms in the C-Space, compute the distances of each from our arm
 # Sort and then return k closest pairs. This is done in O(nlogn) time
 def find_smallest_distances(pairs, ax, arm, k):
-    arms = [Arm_Controller(theta1, theta2, ax, polygons=[]) for theta1, theta2 in pairs]
-    distances = np.array([find_distance(x, arm) for x in arms])
-    sorted_indices = np.argsort(distances)
-    return pairs[sorted_indices[:k]] 
+    tree = kd_tree(pairs.tolist())
+    nearest_points = k_nearest_neighbors(tree, (arm.theta1, arm.theta2), k)
+    return nearest_points
 
 # Distance between two arms is defined as sum of distance between their two joints
 def find_distance(arm1, arm2):
@@ -42,6 +114,7 @@ if __name__=='__main__':
     configs = np.load(args.configs)
     param1, param2 = args.target
     smallest_distances = find_smallest_distances(configs, ax, planar_arm, int(args.k))
+    print(smallest_distances)
     count = 0
     for theta1, theta2 in smallest_distances:
         planar_arm.theta1, planar_arm.theta2 = theta1, theta2

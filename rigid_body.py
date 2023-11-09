@@ -24,6 +24,11 @@ class CarController:
         self.ax.set_ylim(0, 2)
         # Connsect the event to the callback function
         self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
+    
+    def set_obstacles(self, obstacles):
+        self.obstacles = obstacles
+        for p in self.obstacles:
+            add_polygon_to_scene(p,self.ax,True)
 
     def on_key_press(self, event):
         # Define step size for arrow key movement
