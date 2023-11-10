@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
     
 
 def find_smallest_distances(configs, goal, k):
-    distances = [find_distance(config, goal) for config in configs]
+    configs = np.array(configs)
+    distances = np.array([find_distance(config, goal) for config in configs])
     sorted_indices = np.argsort(distances)
     return configs[sorted_indices[:k]] 
 
