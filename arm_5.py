@@ -71,7 +71,7 @@ def collides(planar_arm: Arm_Controller, config):
 
 # Returns a graph in adjacency list representation
 def PRM(iters: int, neighbors: Callable, k: int, sampler: Callable, robot: object, collides: Callable, dist_fn: Callable,
-    discretize: Callable, startConfig: tuple, endConfig: tuple, config_lims:tuple, res: float):
+    discretize: Callable, startConfig: tuple, endConfig: tuple, config_lims:tuple, res: float, animation_fn: Callable):
     
     # We start off by creating a plot of the configuration space
     ax = create_plot()
@@ -108,17 +108,21 @@ def PRM(iters: int, neighbors: Callable, k: int, sampler: Callable, robot: objec
                 Roadmap[q].edges.append(config)
                 Roadmap[q].roads[config] = path[::-1]
         # If any valid edges exist we can add this sample to the configuration space and its edges
-        if Roadmap[config].edges: 
-            x1,y1 = config
-            plt.scatter(x1, y1,c='g')
-            for edge in Roadmap[config].edges:
-                x2,y2 = edge
-                plt.plot([x1,x2], [y1,y2], c='g')
-            if iters % 50 == 0:
-                ax.figure.canvas.draw()
-                plt.pause(1e-6)
+        if Roadmap[config].edges:
+            animation_fn(config, Roadmap[config].edges, iters, ax)
     plt.show()
     return Roadmap
+
+def prm_animation_fn(config, edges, iters, ax):
+    x1,y1 = config
+    plt.scatter(x1, y1,c='g')
+    for edge in edges:
+        x2,y2 = edge
+        plt.plot([x1,x2], [y1,y2], c='g')
+    if iters % 50 == 0:
+        ax.figure.canvas.draw()
+        plt.pause(1e-6)
+
 
 # Assumes a graph which is a hashmap of Roadmap_Node objects
 def A_star(startConfig, goalConfig, Graph, dist_fn):
@@ -170,9 +174,9 @@ if __name__ == '__main__':
     poly_map = load_polygons(args.map)
 
 
-    planar_arm = Arm_Controller(0, 0, ax = create_plot(), polygons = poly_map)
+    planar_arm = Arm_Controller(args.start[0],args.start[1], ax = create_plot(), polygons = poly_map)
     graph = PRM(100, get_k_neighbors, 3, sample, planar_arm, collides, 
-                find_distance, interpolate, tuple(args.start), tuple(args.goal), [-pi, pi], np.radians(8))
+                find_distance, interpolate, tuple(args.start), tuple(args.goal), [-pi, pi], np.radians(8), prm_animation_fn)
     
     var, path = A_star(tuple(args.start),tuple(args.goal), graph, find_distance)
     if var:
@@ -195,24 +199,4 @@ if __name__ == '__main__':
         # plt.close()
         print('finished')
         
-
-    # planar_arm.set_obs_plot()
-
-    # # Our configuration space will be a discretized grid of 100*100
-    # # config_space = np.zeros((100, 100))
-    # ax = create_plot()
-    # ax.set_xlim(-pi, pi)
-    # ax.set_ylim(-pi, pi)
-
-    # configs = [] #Store sampled configurations here
-    # for i in range(1,11):
-    #     t1,t2 = sample()
-    #     configs.append((t1,t2))
-    #     plt.scatter(t1, t2, c='g', label='Sampled Configurations')
-    #     plt.pause(1e-5)
-    # x1,y1 = configs[0]
-    # x2,y2 = configs[1]
-    # plt.plot([x1,x2], [y1,y2], c='g')
-    # ax.figure.canvas.draw()
-    # plt.show()
 
