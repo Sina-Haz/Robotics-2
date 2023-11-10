@@ -34,7 +34,6 @@ class RTT():
     #Add point to nearest node. If goal node, return
     def addChild(self, x, y, theta):
         if x == self.goal.x and y == self.goal.y and theta == self.goal.theta:
-            print("test")
             self.nearestNode.children.append(self.goal)
             self.goal.parent = self.nearestNode
         else:
@@ -87,7 +86,7 @@ class RTT():
         #dist = np.sqrt((node1.x - point[0])**2 + (node1.y - point[1])**2)
         linear_distance = sqrt((node1.x - point[0])**2 + (node1.y- point[1])**2)
         angular_distance = abs(angle_mod(node1.theta)- angle_mod(point[2]))
-        alpha = 0.8
+        alpha = 0.7
         dist = alpha * linear_distance + (1-alpha) * angular_distance
         return dist
     
@@ -128,8 +127,8 @@ def rtt_tree(start, goal, obstacles):
         bool = rrt.isInObstacle(rrt.nearestNode, new, obstacles)
         if bool == False:
             i += 1
-            plt.pause(0.001)
-            plt.plot([rrt.nearestNode.x, new[0]],[rrt.nearestNode.y, new[1]], 'go', linestyle="--")
+            #plt.pause(0.001)
+            #plt.plot([rrt.nearestNode.x, new[0]],[rrt.nearestNode.theta, new[2]], 'go', linestyle="--")
             rrt.addChild(new[0], new[1], new[2])
             if rrt.goalFound(new):
                 rrt.addChild(goal[0], goal[1], goal[2])
@@ -150,7 +149,6 @@ def rtt_tree(start, goal, obstacles):
 def rigid_graph(start,rig_body, waypoints, obstacles):
     begin = start
     for i in range(1, len(waypoints)):
-        print(waypoints[i])
         move_rigid(rig_body, begin, waypoints[i], obstacles)
         begin = waypoints[i]
 
@@ -158,6 +156,7 @@ def rigid_graph(start,rig_body, waypoints, obstacles):
 def move_rigid(rig_body, start, goal, obstacles):
     discretized_pts = interpolate(start, goal, 0.01)
     for pt in discretized_pts:
+        print(pt)
         reposition_car(pt, rig_body)
         rig_body.ax.cla()
         rig_body.set_obstacles(obstacles)
@@ -167,6 +166,7 @@ def move_rigid(rig_body, start, goal, obstacles):
         plt.draw()
         plt.pause(1e-5)
         rig_body.ax.figure.canvas.draw()
+    print('\n')
     
 
 if __name__=='__main__':

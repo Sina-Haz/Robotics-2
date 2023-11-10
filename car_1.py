@@ -91,17 +91,12 @@ class Car:
         #     self.x, self.y, self.theta = currConfig
         
         # Update the car's position
-        self.ax.cla()
-        self.ax.set_xlim([0,2])
-        self.ax.set_ylim([0,2])
-        self.ax.add_patch(self.body)
-        plt.draw()
-        plt.pause(1e-3)
         self.fig.canvas.draw()
 
 
 if __name__ == '__main__':
-    dynamic_car = Car(ax=create_plot(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
+    fig = plt.figure("Car")
+    dynamic_car = Car(ax=fig.gca(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
     show_scene(dynamic_car.ax)
 
 
