@@ -30,6 +30,7 @@ class Car:
         self.ax.set_ylim(0, 2)
         # Connect the event to the callback function
         self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
+        self.run()
 
     # Add obstacles to the plot
     def set_obs_plot(self):
@@ -72,9 +73,9 @@ class Car:
     # Use arrow keys up and down for velocity, left and right for phi. This will run in a loop where each new frame changes
     # by dt.
     def on_key_press(self, event):
+        
         vel_delta = 0.05
         phi_delta = pi/40
-        curr_position, currConfig = deepcopy(self.body), (self.x, self.y,self.theta) # Keep the current position in case we need it
         if event.key == 'up':
             self.update_velocity(self.v + vel_delta)
         elif event.key == 'down':
@@ -84,20 +85,27 @@ class Car:
         elif event.key == 'right':
             self.update_phi(self.phi - phi_delta)
   
-        self.compute_next_position()
-        # # If car goes out of bounds or hits something we should go back to prev position
-        # if (check_boundary(self.body) and check_car(self.body, self.obs)):
-        #     self.body = curr_position
-        #     self.x, self.y, self.theta = currConfig
         
-        # Update the car's position
-        self.fig.canvas.draw()
+    def run(self):
+        curr_position, currConfig = deepcopy(self.body), (self.x, self.y,self.theta) # Keep the current position in case we need it
+        while True:
+            self.compute_next_position()
+            # If car goes out of bounds or hits something we should go back to prev position
+            if (check_boundary(self.body) and check_car(self.body, self.obs)):
+                self.body = curr_position
+                self.x, self.y, self.theta = currConfig
+            
+            # Update the car's position
+            self.fig.canvas.draw()
+
+
 
 
 if __name__ == '__main__':
     fig = plt.figure("Car")
     dynamic_car = Car(ax=fig.gca(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
     show_scene(dynamic_car.ax)
+
 
 
 
