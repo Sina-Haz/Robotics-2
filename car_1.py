@@ -19,6 +19,8 @@ class Car:
 
         # Initial control inputs are 0
         self.v, self.phi = 0,0
+        self.last_key = 'stop'
+        self.stop_sim = False
 
         # Have car body reflect starting config
         self.body = patches.Rectangle((self.x, self.y), self.width, self.height)
@@ -30,6 +32,7 @@ class Car:
         self.ax.set_ylim(0, 2)
         # Connect the event to the callback function
         self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
+        self.run()
 
     # Add obstacles to the plot
     def set_obs_plot(self):
@@ -72,26 +75,37 @@ class Car:
     # Use arrow keys up and down for velocity, left and right for phi. This will run in a loop where each new frame changes
     # by dt.
     def on_key_press(self, event):
+        self.last_key == event.key
+        if event.key == 'q': self.stop_sim = True
+
+
+    def animate(self):
         vel_delta = 0.05
         phi_delta = pi/40
         curr_position, currConfig = deepcopy(self.body), (self.x, self.y,self.theta) # Keep the current position in case we need it
-        if event.key == 'up':
+        if self.last_key == 'up':
             self.update_velocity(self.v + vel_delta)
-        elif event.key == 'down':
+        elif self.last_key == 'down':
             self.update_velocity(self.v - vel_delta)
-        elif event.key == 'left':
+        elif self.last_key == 'left':
             self.update_phi(self.phi + phi_delta)
-        elif event.key == 'right':
+        elif self.last_key == 'right':
             self.update_phi(self.phi - phi_delta)
   
         self.compute_next_position()
         # # If car goes out of bounds or hits something we should go back to prev position
-        # if (check_boundary(self.body) and check_car(self.body, self.obs)):
-        #     self.body = curr_position
-        #     self.x, self.y, self.theta = currConfig
+        if (check_boundary(self.body) and check_car(self.body, self.obs)):
+            self.body = curr_position
+            self.x, self.y, self.theta = currConfig
         
         # Update the car's position
         self.fig.canvas.draw()
+
+    def run(self):
+        while not self.stop_sim:
+            self.animate()
+            plt.pause(self.dt)
+        plt.close()
 
 
 if __name__ == '__main__':
