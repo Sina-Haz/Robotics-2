@@ -24,6 +24,7 @@ class RTT():
         self.randomTree = treeNode(start[0], start[1], start[2])  
         self.goal = treeNode(goal[0], goal[1], goal[2])
         self.nearestNode = None
+        self.currentNode = None
         self.iterations = min(iterations, 1000)
         self.rho = stepSize
         self.path_distance = 0
@@ -40,11 +41,12 @@ class RTT():
             tempNode = treeNode(x, y, theta)
             self.nearestNode.children.append(tempNode)
             tempNode.parent = self.nearestNode
+            self.currentNode = tempNode
     
     #Samples a random point between -pi and pi. Occasionally samples the goal node with a 5% probability
     def samplePoint(self, goal):
-        x = random.uniform(0,2)
-        y = random.uniform(0,2)
+        x = random.uniform(0.1,1.9)
+        y = random.uniform(0.1,1.9)
         theta = random.uniform(-pi, pi)
         prob = random.uniform(0, 1)
         if prob < 0.9:
@@ -60,8 +62,7 @@ class RTT():
     
     #checks whether the node on the graph corresponds to a collision in the arm.
     def isInObstacle(self, start, end, obstacles):
-        u_hat = self.unitVector(start, end)
-        points = interpolate((start.x, start.y, start.theta), (u_hat[0], u_hat[1], u_hat[2]))
+        points = interpolate((start.x, start.y, start.theta), (end[0], end[1], end[2]))
         for point in points:
             if not check_car(make_rigid_body((point[0], point[1]), point[2]), obstacles):
                 return True   
@@ -90,8 +91,8 @@ class RTT():
         dist = alpha * linear_distance + (1-alpha) * angular_distance
         return dist
     
-    def goalFound(self, point):
-        if self.distance(self.goal, point) <= self.rho:
+    def goalFound(self, point, obstacles):
+        if self.distance(self.goal, point) <= self.rho and not self.isInObstacle(self.currentNode, (self.goal.x, self.goal.y, self.goal.theta), obstacles):
             return True
     
 
@@ -117,7 +118,7 @@ def rtt_tree(start, goal, obstacles):
     ax = fig.gca()
     ax.set_xlim(0,2)
     ax.set_ylim(0,2)
-    rrt = RTT(start, goal, 1000, .2)
+    rrt = RTT(start, goal, 1000, .3)
     i = 0
     while i < 1000:
         rrt.resetNearestValues()
@@ -130,7 +131,7 @@ def rtt_tree(start, goal, obstacles):
             #plt.pause(0.001)
             #plt.plot([rrt.nearestNode.x, new[0]],[rrt.nearestNode.theta, new[2]], 'go', linestyle="--")
             rrt.addChild(new[0], new[1], new[2])
-            if rrt.goalFound(new):
+            if rrt.goalFound(new, obstacles):
                 rrt.addChild(goal[0], goal[1], goal[2])
                 print("Goal Found")
                 break
@@ -158,6 +159,8 @@ def move_rigid(rig_body, start, goal, obstacles):
     for pt in discretized_pts:
         print(pt)
         reposition_car(pt, rig_body)
+        if(not check_car(rig_body.car, obstacles)):
+            print("true")
         rig_body.ax.cla()
         rig_body.set_obstacles(obstacles)
         rig_body.ax.set_ylim([0,2])
