@@ -3,6 +3,7 @@ import matplotlib.patches as patches
 from math import degrees, cos, sin, tan, pi, radians
 from create_scene import add_polygon_to_scene, create_plot, show_scene
 import numpy as np
+from matplotlib.animation import FuncAnimation
 from rigid_body import check_boundary, check_car
 from copy import deepcopy
 import time
@@ -103,13 +104,26 @@ class Car:
             # Update the car's position
             self.fig.canvas.draw()
             time.sleep(self.dt)
+
+
+    # Add this method to initialize the animation
+    def init_animation(self):
+        return [self.body]
+
+    # Add this method to update the animation at each frame
+    def update_animation(self, frame):
+        self.compute_next_position()
+        return [self.body]
+
+    # Add this method to start the animation loop
+    def start_animation(self):
+        animation = FuncAnimation(self.fig, self.update_animation, init_func=self.init_animation, blit=True)
+        plt.show()
         
-
-
 
 
 if __name__ == '__main__':
     fig = plt.figure("Car")
     dynamic_car = Car(ax=fig.gca(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
-    dynamic_car.run()
+    dynamic_car.start_animation()
 
