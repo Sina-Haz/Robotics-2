@@ -1,10 +1,10 @@
 # Basically we want to be able to run the command: python arm_1.py --map "some_map.npy" and it should draw a
 # plot of the planar arm on the specified map and have it at a random collision free configuration
 import argparse
-from math import pi
+from math import pi, degrees
 import random
 from create_scene import create_plot, add_polygon_to_scene, load_polygons, show_scene
-from planar_arm import Arm_Controller
+from planar_arm import Arm_Controller, angle_mod
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from rigid_body import CarController, check_car
@@ -17,7 +17,7 @@ def make_rigid_body(center, angle = 0, opacity = 1):
         width,  # Width
         height,  # Height
         linewidth=1, 
-        angle = angle,
+        angle = degrees(angle),
         rotation_point= 'center',
         edgecolor = 'r', 
         facecolor = 'black',
