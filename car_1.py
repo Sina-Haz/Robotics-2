@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from math import degrees, cos, sin, tan, pi
+from math import degrees, cos, sin, tan, pi, radians
 from create_scene import add_polygon_to_scene, create_plot, show_scene
 import numpy as np
 from rigid_body import check_boundary, check_car
@@ -19,6 +19,7 @@ class Car:
 
         # Initial control inputs are 0
         self.v, self.phi = 0,0
+        self.continue_anim=True
 
         # Have car body reflect starting config
         self.body = patches.Rectangle((self.x, self.y), self.width, self.height)
@@ -30,7 +31,6 @@ class Car:
         self.ax.set_ylim(0, 2)
         # Connect the event to the callback function
         self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
-        self.run()
 
     # Add obstacles to the plot
     def set_obs_plot(self):
@@ -84,11 +84,14 @@ class Car:
             self.update_phi(self.phi + phi_delta)
         elif event.key == 'right':
             self.update_phi(self.phi - phi_delta)
+        elif event.key == 'q':
+            self.continue_anim=False
   
         
     def run(self):
-        curr_position, currConfig = deepcopy(self.body), (self.x, self.y,self.theta) # Keep the current position in case we need it
-        while True:
+         show_scene(self.ax)
+         while self.continue_anim:
+            curr_position, currConfig = deepcopy(self.body), (self.body.get_x(), self.body.get_y(),radians(self.body.get_angle())) # Keep the current position in case we need it
             self.compute_next_position()
             # If car goes out of bounds or hits something we should go back to prev position
             if (check_boundary(self.body) and check_car(self.body, self.obs)):
@@ -97,6 +100,7 @@ class Car:
             
             # Update the car's position
             self.fig.canvas.draw()
+            plt.pause(1e-4)
 
 
 
@@ -104,7 +108,7 @@ class Car:
 if __name__ == '__main__':
     fig = plt.figure("Car")
     dynamic_car = Car(ax=fig.gca(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
-    show_scene(dynamic_car.ax)
+    dynamic_car.run()
 
 
 
