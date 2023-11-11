@@ -89,18 +89,21 @@ class Car:
   
         
     def run(self):
-         show_scene(self.ax)
-         while self.continue_anim:
-            curr_position, currConfig = deepcopy(self.body), (self.body.get_x(), self.body.get_y(),radians(self.body.get_angle())) # Keep the current position in case we need it
-            self.compute_next_position()
-            # If car goes out of bounds or hits something we should go back to prev position
-            if (check_boundary(self.body) and check_car(self.body, self.obs)):
-                self.body = curr_position
-                self.x, self.y, self.theta = currConfig
+        plt.ion()
+        plt.show()
+        while self.continue_anim:
+            # curr_position, currConfig = deepcopy(self.body), (self.body.get_x(), self.body.get_y(),radians(self.body.get_angle())) # Keep the current position in case we need it
+            self.compute_next_position() # Boundary checking and obstacles should be done in this function
+            print(f'{self.x}, {self.y}, {self.theta}')
+            # # If car goes out of bounds or hits something we should go back to prev position
+            # if (check_boundary(self.body) and check_car(self.body, self.obs)):
+            #     self.body = curr_position
+            #     self.x, self.y, self.theta = currConfig
             
             # Update the car's position
             self.fig.canvas.draw()
-            plt.pause(1e-4)
+            time.sleep(self.dt)
+        
 
 
 
@@ -110,20 +113,3 @@ if __name__ == '__main__':
     dynamic_car = Car(ax=fig.gca(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
     dynamic_car.run()
 
-
-
-
-        
-
-        
-
-
-
-
-
-
-
-
-        
-    
-    

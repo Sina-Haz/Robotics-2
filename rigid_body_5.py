@@ -94,17 +94,19 @@ if __name__ == '__main__':
             next = path[i+1]
             road_to_next = graph[curr].roads[next]
             all_points += road_to_next
-            rigid_graph(all_points[0], rig_body, all_points[1:], poly_map)
-        # for pt in all_points:
-        #     reposition_car(pt, rig_body)
-        #     rig_body.ax.cla()
-        #     rig_body.ax.set_ylim([0,2])
-        #     rig_body.ax.set_xlim([0,2])
-        #     rig_body.set_obstacles(poly_map)
-        #     rig_body.ax.add_patch(rig_body.car)
-        #     plt.draw()
-        #     plt.pause(.1)
-        #     rig_body.ax.figure.canvas.draw()
+            # rigid_graph(all_points[0], rig_body, all_points[1:], poly_map)
+        for pt in all_points:
+            plt.ion()
+            reposition_car(pt, rig_body)
+            rig_body.ax.cla()
+            rig_body.ax.set_ylim([0,2])
+            rig_body.ax.set_xlim([0,2])
+            rig_body.set_obstacles(poly_map)
+            rig_body.ax.add_patch(rig_body.car)
+            plt.figure(2)
+            plt.draw()
+            plt.pause(.1)
+            rig_body.ax.figure.canvas.draw()
     else:
         print('no path exists')
     print('finished')
