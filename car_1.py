@@ -4,7 +4,8 @@ from math import degrees, cos, sin, tan, pi, radians
 from create_scene import add_polygon_to_scene, create_plot, show_scene
 import numpy as np
 from matplotlib.animation import FuncAnimation
-from rigid_body import check_boundary, check_car
+from rigid_body import CarController, check_boundary, check_car
+from rigid_body_1 import make_rigid_body
 from copy import deepcopy
 import time
 
@@ -48,14 +49,19 @@ class Car:
         self.body.set_y(self.y)
         self.body.set_angle(degrees(self.theta))
 
+
     # Computes next configuration based on controls and dt, updates self.x, self.y, self.theta, and self.body
     def compute_next_position(self):
         currConfig = np.array([self.x, self.y, self.theta])
         q_delta = np.array(self.get_q_delta())
         nextConfig = currConfig + q_delta*self.dt
-
-        self.x, self.y, self.theta = nextConfig
-        self.update_body()
+        placeholder_car = make_rigid_body(nextConfig[:2], nextConfig[2])
+        if not collides_no_controller(placeholder_car, self.obs):
+            self.x, self.y, self.theta = nextConfig
+            self.update_body()
+        else:
+            # Set velocity to 0 and don't update the robots configuration or body
+            self.update_velocity(0)
 
     # Update the velocity making sure to stay within the restraints of [-0.5, 0.5]
     def update_velocity(self, v):
@@ -87,25 +93,7 @@ class Car:
             self.update_phi(self.phi - phi_delta)
         elif event.key == 'q':
             self.continue_anim=False
-  
-        
-    def run(self):
-        plt.ion()
-        plt.show()
-        while self.continue_anim:
-            # curr_position, currConfig = deepcopy(self.body), (self.body.get_x(), self.body.get_y(),radians(self.body.get_angle())) # Keep the current position in case we need it
-            self.compute_next_position() # Boundary checking and obstacles should be done in this function
-            print(f'{self.x}, {self.y}, {self.theta}')
-            # # If car goes out of bounds or hits something we should go back to prev position
-            # if (check_boundary(self.body) and check_car(self.body, self.obs)):
-            #     self.body = curr_position
-            #     self.x, self.y, self.theta = currConfig
-            
-            # Update the car's position
-            self.fig.canvas.draw()
-            time.sleep(self.dt)
-
-
+    
     # Add this method to initialize the animation
     def init_animation(self):
         return [self.body]
@@ -115,10 +103,15 @@ class Car:
         self.compute_next_position()
         return [self.body]
 
+
     # Add this method to start the animation loop
     def start_animation(self):
         animation = FuncAnimation(self.fig, self.update_animation, init_func=self.init_animation, blit=True)
         plt.show()
+
+
+def collides_no_controller(car_body, obstacles):
+    return not check_car(car_body, obstacles) and not check_boundary(car_body)
         
 
 
@@ -127,3 +120,15 @@ if __name__ == '__main__':
     dynamic_car = Car(ax=fig.gca(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
     dynamic_car.start_animation()
 
+
+    # def run(self):
+    #     plt.ion()
+    #     plt.show()
+    #     while self.continue_anim:
+    #         # curr_position, currConfig = deepcopy(self.body), (self.body.get_x(), self.body.get_y(),radians(self.body.get_angle())) # Keep the current position in case we need it
+    #         self.compute_next_position() # Boundary checking and obstacles should be done in this function
+    #         print(f'{self.x}, {self.y}, {self.theta}')
+            
+    #         # Update the car's position
+    #         self.fig.canvas.draw()
+    #         time.sleep(self.dt)
