@@ -20,41 +20,24 @@ def reposition_car(config, car):
 
 
 
-def interpolate(start, goal, resP = 0.05, resA = radians(5)):
+def interpolate(start, goal, res =.05):
     x1,y1,t1 = start
     x2,y2,t2 = goal
-    euclidean_dist = sqrt((x2-x1)**2 + (y2-y1)**2)  #Find Euclidean distance
+    euclidean_dist = sqrt((x2-x1)**2 + (y2-y1)**2)
+    # Use wrap around to keep theta in range [-pi, pi]
+    delta_theta = t2 - t1
+    if delta_theta > pi:
+        delta_theta -= 2*pi
+    elif delta_theta < -pi:
+        delta_theta += 2*pi
+    num_points = int(max(euclidean_dist, delta_theta) / res)
     points = []
-    points.append((x1,y1,t1))
-    angle = atan((y2-y1)/(x2-x1))       #Find angle between start and goal nodes
-    num_angles = int((angle-t1)/resA)    #Set the rigid body to that angle before moving
-    curr_angle = t1
-    for i in range(abs(num_angles)):
-        if angle > t1:
-            curr_angle = curr_angle+resA
-            points.append((x1,y1,angle_mod(curr_angle)))
-        else:
-            curr_angle = curr_angle-resA
-            points.append((x1,y1,angle_mod(curr_angle)))
-    points.append((x1,y1,angle))
-    num_points = int(euclidean_dist / resP)
     for i in range(num_points+1):
-        t = 0
-        if num_points != 0:
-            t = i/num_points
+        t = i/num_points
         x_i = (1-t)*x1 + t*x2
         y_i = (1-t)*y1 + t*y2
-        points.append((x_i, y_i, angle))
-    angle_to_goal = int((t2-angle)/resA)       #Find angle between that angle and goal
-    curr_angle = angle
-    for i in range(abs(angle_to_goal)):
-        if t2 > angle:
-            curr_angle = curr_angle + resA
-            points.append((x2,y2,angle_mod(curr_angle)))
-        else:
-            curr_angle = curr_angle - resA
-            points.append((x2,y2,angle_mod(curr_angle)))
-    points.append((x2, y2, t2))
+        t_i = (1-t)*t1 + t*t2
+        points.append((x_i, y_i, t_i))
     return points
 
 
@@ -64,7 +47,6 @@ if __name__ == '__main__':
     parser.add_argument('--start', nargs = 3, type=float, required=True, help='Starting configuration, give 3 floats in radians, x and y and then a theta in range [-pi, pi]')
     parser.add_argument('--goal', nargs=3, type=float, required=True, help='Goal configuration, give 3 floats in radians, x and y and then a theta in range [-pi, pi]')
     args = parser.parse_args()
-
     discretized_pts = interpolate(args.start, args.goal, 0.05)
     plt.close('all')
     rig_body = CarController(ax = create_plot(), car = make_rigid_body((args.start[:2])), obstacles=[])
