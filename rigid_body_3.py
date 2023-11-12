@@ -30,10 +30,14 @@ def interpolate(start, goal, res =.05):
         delta_theta -= 2*pi
     elif delta_theta < -pi:
         delta_theta += 2*pi
+
     num_points = int(max(euclidean_dist, delta_theta) / res)
     points = []
     for i in range(num_points+1):
-        t = i/num_points
+        if num_points == 0:
+            t = 1
+        else:
+            t = i/num_points
         x_i = (1-t)*x1 + t*x2
         y_i = (1-t)*y1 + t*y2
         t_i = (1-t)*t1 + t*t2
