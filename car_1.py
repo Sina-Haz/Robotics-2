@@ -66,6 +66,7 @@ class Car:
             self.x, self.y, self.theta = nextConfig
             self.update_body()
         else:
+            print('hit something')
             # Set velocity to 0 and don't update the robots configuration or body
             self.update_velocity(0)
 
@@ -130,7 +131,7 @@ if __name__ == '__main__':
     parser.add_argument('--control', type=float, nargs=2, required=False, help='control')
     parser.add_argument('--start', type=float, nargs=3, required=False, help='target orientation')
     args = parser.parse_args()
-    if args is None:
+    if args.control is None or args.start is None:
         dynamic_car = Car(ax=fig.gca(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
         dynamic_car.start_animation()
     else:

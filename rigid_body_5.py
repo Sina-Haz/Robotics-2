@@ -23,19 +23,18 @@ def get_k_neighbors(currConfig, otherConfigs, k, dist_fn = None):
 # Assumes we already added the obstacles as an instance of the CarController obj
 def collides(rigid_body: CarController, config):
     reposition_car(config, rigid_body)
-    return not check_car(rigid_body.car, rigid_body.obstacles) and not check_boundary(rigid_body.car)
+    return not (check_car(rigid_body.car, rigid_body.obstacles) and check_boundary(rigid_body.car))
 
 # Gimmick animation function for PRM, will only use x, y and ignore theta. Just want to make sure PRM working properly
 def prm_animation_fn(config, edges, iters, ax):
-    pass
-    # x1,y1,_ = config
-    # plt.scatter(x1, y1,c='g')
-    # for edge in edges:
-    #     x2,y2,_ = edge
-    #     plt.plot([x1,x2], [y1,y2], c='g')
-    # if iters % 50 == 0:
-    #     ax.figure.canvas.draw()
-    #     plt.pause(1e-6)
+    x1,y1,_ = config
+    plt.scatter(x1, y1,c='g')
+    for edge in edges:
+        x2,y2,_ = edge
+        plt.plot([x1,x2], [y1,y2], c='g')
+    if iters % 50 == 0:
+        ax.figure.canvas.draw()
+        plt.pause(1e-6)
     
 
 # Almost the same A star as we have in arm 5 with a small tweak for distance function
@@ -84,7 +83,7 @@ if __name__ == '__main__':
     rig_body.car.set_angle(degrees(args.start[2]))
     rig_body.set_obstacles(poly_map)
 
-    graph = PRM(150, get_k_neighbors, 3, sample, rig_body, collides, find_distance, interpolate,
+    graph = PRM(100, get_k_neighbors, 3, sample, rig_body, collides, find_distance, interpolate,
                 tuple(args.start), tuple(args.goal), (0, 2), 0.05, prm_animation_fn)
     print('PRM finished')
     plt.close()
