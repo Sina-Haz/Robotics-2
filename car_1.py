@@ -7,6 +7,7 @@ from matplotlib.animation import FuncAnimation
 from rigid_body import check_boundary, check_car
 from copy import deepcopy
 import time
+import argparse
 
 class Car:
     def __init__(self, ax, startConfig, dt, width = 0.2, height = 0.1, obstacles = []):
@@ -42,6 +43,11 @@ class Car:
     def get_q_delta(self):
         return [self.v*cos(self.theta), self.v*sin(self.theta), (self.v/self.L)*tan(self.phi)]
     
+    #Sets velocity and direction of car
+    def set_velocity(self, v, phi):
+        self.v = v
+        self.phi = phi
+
     # Updates the body using current configuration
     def update_body(self):
         self.body.set_x(self.x)
@@ -93,13 +99,13 @@ class Car:
         plt.ion()
         plt.show()
         while self.continue_anim:
-            # curr_position, currConfig = deepcopy(self.body), (self.body.get_x(), self.body.get_y(),radians(self.body.get_angle())) # Keep the current position in case we need it
+            curr_position, currConfig = deepcopy(self.body), (self.body.get_x(), self.body.get_y(),radians(self.body.get_angle())) # Keep the current position in case we need it
             self.compute_next_position() # Boundary checking and obstacles should be done in this function
             print(f'{self.x}, {self.y}, {self.theta}')
             # # If car goes out of bounds or hits something we should go back to prev position
-            # if (check_boundary(self.body) and check_car(self.body, self.obs)):
-            #     self.body = curr_position
-            #     self.x, self.y, self.theta = currConfig
+            if (check_boundary(self.body) and check_car(self.body, self.obs)):
+                 self.body = curr_position
+                 self.x, self.y, self.theta = currConfig
             
             # Update the car's position
             self.fig.canvas.draw()
@@ -124,6 +130,18 @@ class Car:
 
 if __name__ == '__main__':
     fig = plt.figure("Car")
-    dynamic_car = Car(ax=fig.gca(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
-    dynamic_car.start_animation()
-
+    parser = argparse.ArgumentParser(description="My Script")
+    parser.add_argument("--myArg")
+    args, leftovers = parser.parse_known_args()
+    parser.add_argument('--control', type=float, nargs=2, required=False, help='control')
+    parser.add_argument('--start', type=float, nargs=3, required=False, help='target orientation')
+    args = parser.parse_args()
+    if args is None:
+        dynamic_car = Car(ax=fig.gca(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
+        dynamic_car.start_animation()
+    else:
+        print("test")
+        v,phi = args.control
+        dynamic_car = Car(ax=fig.gca(), startConfig = args.start,dt = 0.1)
+        dynamic_car.set_velocity(v,phi)
+        dynamic_car.start_animation()
