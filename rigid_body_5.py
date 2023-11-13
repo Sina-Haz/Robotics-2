@@ -1,5 +1,5 @@
 from arm_5 import PRM
-from math import pi, degrees
+from math import pi, degrees, radians
 from create_scene import create_plot, load_polygons
 import random, heapq
 from rigid_body_2 import find_smallest_distances, find_distance
@@ -39,14 +39,14 @@ def prm_animation_fn(config, edges, iters, ax):
 
 # Almost the same A star as we have in arm 5 with a small tweak for distance function
 def A_star(startConfig, goalConfig, Graph, dist_fn):
-    def arm_dist(config1, config2):
+    def get_dist(config1, config2):
         return dist_fn(config1,config2)
     
     def h(config):
-        return arm_dist(config, goalConfig)
+        return get_dist(config, goalConfig)
     
     def get_path(config):
-        path = []
+        path = [config]
         while parents[config]:
             path.append(parents[config])
             config = parents[config]
@@ -58,10 +58,10 @@ def A_star(startConfig, goalConfig, Graph, dist_fn):
     while fringe:
         curr = heapq.heappop(fringe)
         if curr[1] == goalConfig:
-            return True, get_path(curr[1])
+            return True, get_path(goalConfig)
 
         for child in Graph[curr[1]].edges:
-            tmpDist = distances[curr[1]] + arm_dist(curr[1], child)
+            tmpDist = distances[curr[1]] + get_dist(curr[1], child)
             if child not in distances or tmpDist < distances[child]:
                 distances[child] = tmpDist
                 parents[child] = curr[1]
@@ -95,6 +95,7 @@ if __name__ == '__main__':
     
     var, path = A_star(tuple(args.start),tuple(args.goal), graph, find_distance)
     if var:
+        if path[-1] == args.goal:print('A star worked')
         all_points = []
         for i in range(len(path)-1):
             curr = path[i]
@@ -111,8 +112,9 @@ if __name__ == '__main__':
             rig_body2.ax.add_patch(rig_body2.car)
             rig_body2.set_obstacles(rig_body2.obstacles)
             plt.draw()
-            plt.pause(.1)
+            plt.pause(1e-4)
             rig_body2.ax.figure.canvas.draw()
+        if (rig_body2.x, rig_body2.y, radians(rig_body2.degrees())) == args.goal: print('got to goal configuration')
     else:
         print('no path exists')
     print('finished')

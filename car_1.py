@@ -19,6 +19,7 @@ class Car:
         self.L = 0.2 # length of wheelbase
         self.obs = obstacles
         self.dt = dt
+        self.last_pos = None
 
         # Initial control inputs are 0
         self.v, self.phi = 0,0
@@ -63,12 +64,15 @@ class Car:
         nextConfig = currConfig + q_delta*self.dt
         placeholder_car = make_rigid_body(nextConfig[:2], nextConfig[2])
         if not collides_no_controller(placeholder_car, self.obs):
+            self.last_pos = currConfig
             self.x, self.y, self.theta = nextConfig
             self.update_body()
         else:
-            print('hit something')
-            # Set velocity to 0 and don't update the robots configuration or body
+            # Set velocity to 0 and go back to last position
             self.update_velocity(0)
+            self.x, self.y, self.theta = self.last_pos
+            self.update_body()
+
 
     # Update the velocity making sure to stay within the restraints of [-0.5, 0.5]
     def update_velocity(self, v):
@@ -119,7 +123,7 @@ class Car:
 
 
 def collides_no_controller(car_body, obstacles):
-    return not check_car(car_body, obstacles) and not check_boundary(car_body)
+    return not (check_car(car_body, obstacles) and check_boundary(car_body))
         
 
 
