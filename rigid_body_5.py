@@ -1,4 +1,4 @@
-from arm_5 import PRM
+from arm_5 import PRM, Roadmap_Node
 from math import pi, degrees, radians
 from create_scene import create_plot, load_polygons
 import random, heapq
@@ -68,6 +68,21 @@ def A_star(startConfig, goalConfig, Graph, dist_fn):
                 fringe.append((tmpDist+h(child), child))
     return False, []
 
+def dfs(graph, src, goal, visited=None, path=None):
+    if visited is None:
+        visited = set()
+    if path is None:
+        path = []
+    path = path+[src]
+    visited.add(src)
+    if src == goal:
+        return path
+    for neighbor in graph[src].edges:
+        if neighbor not in visited:
+            new_path = dfs(graph, neighbor, goal, visited, path)
+            if new_path: return new_path
+    return None
+
 
 # Usage: python3 rigid_body_5.py --start 0.5 0.25 0 --goal 1.75 1.5 0.5 --map "rigid_polygons.npy"
 if __name__ == '__main__':
@@ -95,7 +110,6 @@ if __name__ == '__main__':
     
     var, path = A_star(tuple(args.start),tuple(args.goal), graph, find_distance)
     if var:
-        if path[-1] == args.goal:print('A star worked')
         all_points = []
         for i in range(len(path)-1):
             curr = path[i]
@@ -114,7 +128,6 @@ if __name__ == '__main__':
             plt.draw()
             plt.pause(1e-4)
             rig_body2.ax.figure.canvas.draw()
-        if (rig_body2.x, rig_body2.y, radians(rig_body2.degrees())) == args.goal: print('got to goal configuration')
     else:
         print('no path exists')
     print('finished')

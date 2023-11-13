@@ -197,6 +197,6 @@ if __name__ == '__main__':
             planar_arm.ax.figure.canvas.draw()
             plt.pause(1e-3)
         # plt.close()
-        print('finished')
+    print('finished')
         
 
