@@ -27,14 +27,15 @@ def collides(rigid_body: CarController, config):
 
 # Gimmick animation function for PRM, will only use x, y and ignore theta. Just want to make sure PRM working properly
 def prm_animation_fn(config, edges, iters, ax):
-    x1,y1,_ = config
-    plt.scatter(x1, y1,c='g')
-    for edge in edges:
-        x2,y2,_ = edge
-        plt.plot([x1,x2], [y1,y2], c='g')
-    if iters % 50 == 0:
-        ax.figure.canvas.draw()
-        plt.pause(1e-6)
+    pass
+    # x1,y1,_ = config
+    # plt.scatter(x1, y1,c='g')
+    # for edge in edges:
+    #     x2,y2,_ = edge
+    #     plt.plot([x1,x2], [y1,y2], c='g')
+    # if iters % 50 == 0:
+    #     ax.figure.canvas.draw()
+    #     plt.pause(1e-6)
     
 
 # Almost the same A star as we have in arm 5 with a small tweak for distance function
@@ -116,9 +117,8 @@ if __name__ == '__main__':
             next = path[i+1]
             road_to_next = graph[curr].roads[next]
             all_points += road_to_next
-            # rigid_graph(all_points[0], rig_body, all_points[1:], poly_map)
+        all_points.append(path[-1])
         for pt in all_points:
-            # if collides(rig_body, pt): print('we hit smth')
             reposition_car(pt, rig_body2)
             rig_body2.ax.cla()
             rig_body2.ax.set_ylim([0,2])

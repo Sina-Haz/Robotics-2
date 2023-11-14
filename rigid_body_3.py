@@ -42,6 +42,8 @@ def interpolate(start, goal, res =.05):
         y_i = (1-t)*y1 + t*y2
         t_i = (1-t)*t1 + t*t2
         points.append((x_i, y_i, t_i))
+    if points and points[-1] != goal:
+        points.append(goal)
     return points
 
 

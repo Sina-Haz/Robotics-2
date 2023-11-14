@@ -121,7 +121,7 @@ def prm_animation_fn(config, edges, iters, ax):
         plt.plot([x1,x2], [y1,y2], c='g')
     if iters % 50 == 0:
         ax.figure.canvas.draw()
-        plt.pause(1e-6)
+        # plt.pause(1e-6)
 
 
 # Assumes a graph which is a hashmap of Roadmap_Node objects
@@ -137,7 +137,7 @@ def A_star(startConfig, goalConfig, Graph, dist_fn):
         return arm_dist(config, goalConfig)
     
     def get_path(config):
-        path = []
+        path = [config]
         while parents[config]:
             path.append(parents[config])
             config = parents[config]
@@ -197,6 +197,7 @@ if __name__ == '__main__':
             planar_arm.ax.figure.canvas.draw()
             plt.pause(1e-3)
         # plt.close()
+    print(f'goal is: {args.goal}, final position is: {(planar_arm.theta1, planar_arm.theta2)}')
     print('finished')
         
 
