@@ -189,5 +189,3 @@ if __name__=='__main__':
     rtt_tree(np.array([start1, start2, theta1]), np.array([goal1, goal2, theta2]), poly_map)
 
     
-
-

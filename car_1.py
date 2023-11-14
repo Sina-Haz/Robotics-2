@@ -25,7 +25,7 @@ class Car:
         self.continue_anim=True
 
         # Have car body reflect starting config
-        self.body = patches.Rectangle((self.x, self.y), self.width, self.height)
+        self.body = make_rigid_body((self.x, self.y))
         self.body.set_angle(degrees(self.theta))
         self.ax.add_patch(self.body)
         self.fig = ax.figure
@@ -35,6 +35,8 @@ class Car:
         # Connect the event to the callback function
         self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
 
+    def set_obs(self, obstacles):
+        self.obs = obstacles
     # Add obstacles to the plot
     def set_obs_plot(self):
         for p in self.obs:
@@ -65,6 +67,7 @@ class Car:
         if not collides_no_controller(placeholder_car, self.obs):
             self.x, self.y, self.theta = nextConfig
             self.update_body()
+            return nextConfig
         else:
             print('hit something')
             # Set velocity to 0 and don't update the robots configuration or body
@@ -107,16 +110,31 @@ class Car:
         return [self.body]
 
     # Add this method to update the animation at each frame
-    def update_animation(self, frame):
+    def update_animation_waypoints(self, frame, waypoints):
+        if not check_car(self.body, self.obs):
+            print("test")
+        if frame < len(waypoints) - 1:
+            self.update_velocity(waypoints[frame+1][3])
+            self.update_phi(waypoints[frame+1][4])
+        else:
+            self.update_velocity(waypoints[frame][3])
+            self.update_phi(waypoints[frame][4])
         self.compute_next_position()
         return [self.body]
 
 
     # Add this method to start the animation loop
-    def start_animation(self):
-        animation = FuncAnimation(self.fig, self.update_animation, init_func=self.init_animation, blit=True)
+    def start_animation(self, frames = 0, interval = 0, waypoints = []):
+        if frames == 0:
+            animation = FuncAnimation(self.fig, self.update_animation, init_func=self.init_animation, blit=True)
+        else:
+            animation = FuncAnimation(self.fig, self.update_animation_waypoints, fargs=(waypoints,), init_func=self.init_animation, blit=True, frames = frames, interval = interval,repeat=False)
         plt.show()
-
+        
+    # Add this method to update the animation at each frame
+    def update_animation(self, frame):
+        self.compute_next_position()
+        return [self.body]
 
 def collides_no_controller(car_body, obstacles):
     return not check_car(car_body, obstacles) and not check_boundary(car_body)
@@ -135,7 +153,6 @@ if __name__ == '__main__':
         dynamic_car = Car(ax=fig.gca(), startConfig=(0.5, 0.5, 0.5), dt = 0.1)
         dynamic_car.start_animation()
     else:
-        print("test")
         v,phi = args.control
         dynamic_car = Car(ax=fig.gca(), startConfig = args.start,dt = 0.1)
         dynamic_car.set_velocity(v,phi)

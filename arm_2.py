@@ -120,7 +120,7 @@ if __name__=='__main__':
     planar_arm.add_arm('b') # Original Target Arm
     configs = np.load(args.configs)
     param1, param2 = args.target
-    smallest_distances = find_smallest_distances(configs, ax, planar_arm, int(args.k))
+    smallest_distances = find_smallest_distances_kd(configs, ax, planar_arm, int(args.k))
     print(smallest_distances)
     count = 0
     for theta1, theta2 in smallest_distances:
