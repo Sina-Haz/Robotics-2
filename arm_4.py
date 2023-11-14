@@ -86,7 +86,7 @@ class RTT():
             self.findNearest(child,point)
 
     def distance(self, node1,point):
-        dist = np.sqrt((node1.x - point[0])**2 + (node1.y - point[1])**2)
+        dist = np.sqrt((angle_mod(node1.x )- angle_mod(point[0]))**2 + (angle_mod(node1.y) - angle_mod(point[1]))**2)
         return dist
     
     def goalFound(self, point):

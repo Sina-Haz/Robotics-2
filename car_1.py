@@ -77,6 +77,13 @@ class Car:
             self.update_body()
 
 
+    def find_next_position(self):
+        currConfig = np.array([self.x, self.y, self.theta])
+        q_delta = np.array(self.get_q_delta())
+        nextConfig = currConfig + q_delta*self.dt
+        self.x, self.y, self.theta = nextConfig
+        self.update_body()
+
     # Update the velocity making sure to stay within the restraints of [-0.5, 0.5]
     def update_velocity(self, v):
         if v >= 0:
