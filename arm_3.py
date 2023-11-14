@@ -11,7 +11,6 @@ def interpolate(start, goal, resolution):
     # Get equation for the line as such: y - y1 = m(x - x1), solve for m
     x1,y1 = start
     x2,y2 = goal
-    x1 = 
     slope = (y2-y1)/(x2-x1)
     points = []
     num_points = abs(int((x2-x1)/resolution + 1))
