@@ -1,7 +1,7 @@
 import argparse
-from math import pi, radians, floor, sqrt
+from math import pi, radians, floor, sqrt, ceil
 import random
-from rigid_body import CarController, check_car
+from rigid_body import CarController, check_car, check_boundary
 from create_scene import create_plot, add_polygon_to_scene, load_polygons, show_scene
 from rigid_body_1 import make_rigid_body
 from rigid_body_3 import interpolate, reposition_car
@@ -62,7 +62,7 @@ class RTT():
         y = random.uniform(0.1,1.9)
         theta = random.uniform(-pi, pi)
         prob = random.uniform(0, 1)
-        if prob < 0.9:
+        if prob < 0.8:
             return np.array([x,y, theta])
         else:
             return np.array(goal)
@@ -72,25 +72,34 @@ class RTT():
         offset = self.rho*self.unitVector(start, end)
         point = np.array([start.x + offset[0], start.y + offset[1], start.theta + offset[2]])
         blossom = []
+        fig = plt.figure("Car")
         for i in range(b):
             v = random.uniform(-.5, .5)
             phi = random.uniform(-pi/4, pi/4)
-            dynamic_car = Car(None, startConfig=(start.x, start.y, start.theta), dt = .1)
+            dynamic_car = Car(ax = fig.gca(), startConfig=(start.x, start.y, start.theta), dt = time)
             dynamic_car.set_velocity(v, phi)
-            if not(self.isInObstacle(dynamic_car, obstacles, time, 0.1)):
-                blossom.append((v,phi, dynamic_car.x, dynamic_car.y, dynamic_car.theta))
+            #print("Original car: ",dynamic_car.x, dynamic_car.y,dynamic_car.theta, dynamic_car.v, dynamic_car.phi)
+            if not(self.isInObstacle(dynamic_car, obstacles)):
+                attr = (v,phi, dynamic_car.x, dynamic_car.y, dynamic_car.theta)
+                if self.goalFound(attr):
+                    return np.array(attr)
+                blossom.append(attr)
+            #print(dynamic_car.x, dynamic_car.y, dynamic_car.theta, dynamic_car.v, dynamic_car.phi)
         closest = sorted(blossom, key = lambda b: self.distance((b[2], b[3], b[4]), point))[0]
-        #print(closest)
         return np.array(closest)
     
 
 
+    def getEdge(self, parent, child):
+        for edge in parent.edges:
+            if edge.get_child() == child:
+                return edge
+
     #checks whether the node on the graph corresponds to a collision in the arm.
-    def isInObstacle(self, dynamic_car, obstacles, t, dt):
-        for j in range(int(t/dt)):
-            new = dynamic_car.compute_next_position()
-            if not check_car(make_rigid_body((new[0], new[1]), new[2]), obstacles):
-                return True
+    def isInObstacle(self, dynamic_car, obstacles):
+        dynamic_car.compute_next_position()
+        if not check_car(dynamic_car.body, obstacles) and not check_boundary(dynamic_car.body):
+            return True
         return False
     
     def unitVector(self, start, end):
@@ -111,14 +120,22 @@ class RTT():
 
     def distance(self, point1,point2):
         #dist = np.sqrt((node1.x - point[0])**2 + (node1.y - point[1])**2)
-        linear_distance = sqrt((point1[0] - point2[0])**2 + (point1[1]- point2[1])**2)
-        angular_distance = abs(angle_mod(point1[2])- angle_mod(point2[2]))
         alpha = 0.7
-        dist = alpha * linear_distance + (1-alpha) * angular_distance
+        dist = alpha * self.linear_distance(point1,point2) + (1-alpha) * self.angular_distance(point1,point2)
         return dist
     
-    def goalFound(self, point, obstacles):
-        if self.distance((self.goal.x, self.goal.y, self.goal.theta), point) <= 1:
+
+    def linear_distance(self,point1, point2):
+        linear_distance = sqrt((point1[0] - point2[0])**2 + (point1[1]- point2[1])**2)
+        return linear_distance
+    
+    def angular_distance(self, point1, point2):
+        angular_distance = abs(angle_mod(point1[2])- angle_mod(point2[2]))
+        return angular_distance
+    
+    def goalFound(self, point):
+        a = self.angular_distance((self.goal.x, self.goal.y, self.goal.theta), (point[2], point[3], point[4]))
+        if self.linear_distance((self.goal.x, self.goal.y, self.goal.theta), (point[2], point[3], point[4])) <= .1 and a <0.5:
             return True
     
 
@@ -130,9 +147,11 @@ class RTT():
         if goal.x == self.randomTree.x and goal.y == self.randomTree.y and goal.theta == self.randomTree.theta:
             return
         self.numWaypoints += 1
-        currentPoint = np.array([goal.x, goal.y, goal.theta])
+        edge = self.getEdge(goal.parent, goal)
+        currentPoint = np.array([goal.x, goal.y, goal.theta, edge.v, edge.phi])
         self.Waypoints.insert(0,currentPoint)
         self.path_distance += self.rho
+        self.currentNode = goal
         self.retracePath(goal.parent)
         
     
@@ -143,54 +162,44 @@ def rtt_tree(start, goal, obstacles):
     plt.plot(start[0], start[1], 'ro', alpha=0.1)
     ax = fig.gca()
     ax.set_xlim(0,2)
+    t = .2
     ax.set_ylim(0,2)
-    rrt = RTT(start, goal, 1000, .3)
+    rrt = RTT(start, goal, 1000, t)
     i = 0
     while i < 1000:
+        print("Iteration: ", i)
         rrt.resetNearestValues()
         point = rrt.samplePoint(goal)
         rrt.findNearest(rrt.randomTree, point)
-        new = rrt.goToPoint(rrt.nearestNode, point, 20, .8, obstacles)
+        new = rrt.goToPoint(rrt.nearestNode, point, 200, t, obstacles)
         i += 1
         rrt.addChild(new[0], new[1], new[2], new[3], new[4])
-        if rrt.goalFound(new, obstacles):
+        #plt.pause(.01)
+        #plt.plot([rrt.nearestNode.x, new[2]],[rrt.nearestNode.y, new[3]], 'go', linestyle="--")
+        if rrt.goalFound(new):
             rrt.addChild(0,0, goal[0], goal[1], goal[2])
             print("Goal Found")
             break
-    plt.pause(1)
+    #plt.pause(1)
     rrt.retracePath(rrt.goal)
-    rrt.Waypoints.insert(0, start)
+    edge = rrt.getEdge(rrt.randomTree, rrt.currentNode)
+    rrt.Waypoints.insert(0, (start[0], start[1], start[2], edge.v, edge.phi))
     for i in range(len(rrt.Waypoints) - 1):
-        plt.plot([rrt.Waypoints[i][0], rrt.Waypoints[i+1][0]], [rrt.Waypoints[i][1], rrt.Waypoints[i+1][1]], 'ro', linestyle="--")
-    plt.pause(1)
+        break
+        #plt.plot([rrt.Waypoints[i][0], rrt.Waypoints[i+1][0]], [rrt.Waypoints[i][1], rrt.Waypoints[i+1][1]], 'ro', linestyle="--")
+    #plt.pause(1)
     plt.close()
     fig,ax = plt.subplots(dpi=100)
+    car_graph(ax, rrt.Waypoints,start, obstacles, t)
     
 
 
-def rigid_graph(start,rig_body, waypoints, obstacles):
-    begin = start
-    for i in range(1, len(waypoints)):
-        move_rigid(rig_body, begin, waypoints[i], obstacles)
-        begin = waypoints[i]
-
-
-def move_rigid(rig_body, start, goal, obstacles):
-    discretized_pts = interpolate(start, goal, 0.01)
-    for pt in discretized_pts:
-        print(pt)
-        reposition_car(pt, rig_body)
-        if(not check_car(rig_body.car, obstacles)):
-            print("true")
-        rig_body.ax.cla()
-        rig_body.set_obstacles(obstacles)
-        rig_body.ax.set_ylim([0,2])
-        rig_body.ax.set_xlim([0,2])
-        rig_body.ax.add_patch(rig_body.car)
-        plt.draw()
-        plt.pause(1e-5)
-        rig_body.ax.figure.canvas.draw()
-    print('\n')
+def car_graph(ax, waypoints,start, obstacles, t):
+    car =  Car(ax = ax, startConfig=(start[0], start[1], start[2]), dt = t)
+    car.set_obs(obstacles)
+    car.set_obs_plot()
+    car.start_animation(len(waypoints), 500, waypoints)
+    
     
 
 if __name__=='__main__':
