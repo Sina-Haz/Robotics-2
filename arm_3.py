@@ -1,6 +1,6 @@
 import argparse
 from arm import NLinkArm
-from planar_arm import Arm_Controller, angle_mod
+from planar_arm import Arm_Controller
 from math import radians
 from create_scene import create_plot
 from matplotlib.animation import FuncAnimation
@@ -11,7 +11,7 @@ def interpolate(start, goal, resolution):
     # Get equation for the line as such: y - y1 = m(x - x1), solve for m
     x1,y1 = start
     x2,y2 = goal
-    x1, y1, x2, y2 = angle_mod(x1), angle_mod(y1), angle_mod(x2), angle_mod(y2)
+    x1 = 
     slope = (y2-y1)/(x2-x1)
     points = []
     num_points = abs(int((x2-x1)/resolution + 1))
@@ -21,8 +21,8 @@ def interpolate(start, goal, resolution):
         y_i = slope*(x_i - x1) + y1
         points.append((x_i, y_i))
     
-    if len(points)!=0 and points[-1] != (x2, y2):
-        points.append((x2,y2))
+    if len(points)!=0 and points[-1] != goal:
+        points.append(goal)
     return points
 
 
