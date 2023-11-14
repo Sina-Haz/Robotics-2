@@ -1,5 +1,5 @@
-from arm_5 import PRM
-from math import pi, degrees
+from arm_5 import PRM, Roadmap_Node
+from math import pi, degrees, radians
 from create_scene import create_plot, load_polygons
 import random, heapq
 from rigid_body_2 import find_smallest_distances, find_distance
@@ -39,14 +39,14 @@ def prm_animation_fn(config, edges, iters, ax):
 
 # Almost the same A star as we have in arm 5 with a small tweak for distance function
 def A_star(startConfig, goalConfig, Graph, dist_fn):
-    def arm_dist(config1, config2):
+    def get_dist(config1, config2):
         return dist_fn(config1,config2)
     
     def h(config):
-        return arm_dist(config, goalConfig)
+        return get_dist(config, goalConfig)
     
     def get_path(config):
-        path = []
+        path = [config]
         while parents[config]:
             path.append(parents[config])
             config = parents[config]
@@ -58,15 +58,30 @@ def A_star(startConfig, goalConfig, Graph, dist_fn):
     while fringe:
         curr = heapq.heappop(fringe)
         if curr[1] == goalConfig:
-            return True, get_path(curr[1])
+            return True, get_path(goalConfig)
 
         for child in Graph[curr[1]].edges:
-            tmpDist = distances[curr[1]] + arm_dist(curr[1], child)
+            tmpDist = distances[curr[1]] + get_dist(curr[1], child)
             if child not in distances or tmpDist < distances[child]:
                 distances[child] = tmpDist
                 parents[child] = curr[1]
                 fringe.append((tmpDist+h(child), child))
     return False, []
+
+def dfs(graph, src, goal, visited=None, path=None):
+    if visited is None:
+        visited = set()
+    if path is None:
+        path = []
+    path = path+[src]
+    visited.add(src)
+    if src == goal:
+        return path
+    for neighbor in graph[src].edges:
+        if neighbor not in visited:
+            new_path = dfs(graph, neighbor, goal, visited, path)
+            if new_path: return new_path
+    return None
 
 
 # Usage: python3 rigid_body_5.py --start 0.5 0.25 0 --goal 1.75 1.5 0.5 --map "rigid_polygons.npy"
@@ -111,7 +126,7 @@ if __name__ == '__main__':
             rig_body2.ax.add_patch(rig_body2.car)
             rig_body2.set_obstacles(rig_body2.obstacles)
             plt.draw()
-            plt.pause(.1)
+            plt.pause(1e-4)
             rig_body2.ax.figure.canvas.draw()
     else:
         print('no path exists')
