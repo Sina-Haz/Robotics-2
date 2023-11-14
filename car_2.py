@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 
 class Edge:
-    def __init__(self, begin, end, v, phi):
+    def __init__(self, begin, end, v, phi ):
         self.begin = begin
         self.end = end
         self.v = v
@@ -97,7 +97,7 @@ class RTT():
 
     #checks whether the node on the graph corresponds to a collision in the arm.
     def isInObstacle(self, dynamic_car, obstacles):
-        dynamic_car.compute_next_position()
+        dynamic_car.find_next_position()
         if not check_car(dynamic_car.body, obstacles) and not check_boundary(dynamic_car.body):
             return True
         return False

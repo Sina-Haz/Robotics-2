@@ -1,5 +1,6 @@
 
 import argparse
+import time
 from math import pi, sqrt
 import random
 from create_scene import create_plot, add_polygon_to_scene, load_polygons, show_scene
@@ -32,7 +33,7 @@ def kd_tree(points, depth=0):
     node.right = kd_tree(points[median + 1:], depth + 1)
     return node
 
-def k_nearest_neighbors(root, query_point, k):
+def k_nearest_neighbors(root, query_point, k, ax):
     pq = PriorityQueue()
 
     def search(node):
@@ -41,7 +42,10 @@ def k_nearest_neighbors(root, query_point, k):
             return
 
         # Calculate distance
-        dist = np.linalg.norm(np.array(query_point) - np.array(node.point))
+        #dist = np.linalg.norm(np.array(query_point) - np.array(node.point))
+        dist = find_distance(Arm_Controller(query_point[0], query_point[1], ax, polygons=[]),Arm_Controller(node.point[0], node.point[1], ax, polygons=[]))
+        
+        
 
         # Add to priority queue
         # used -dist for the distance metric in the priority queue. 
@@ -84,14 +88,14 @@ def k_nearest_neighbors(root, query_point, k):
 # Sort and then return k closest pairs. This is done in O(nlogn) time
 def find_smallest_distances(pairs, ax, arm, k):
     arms = [Arm_Controller(theta1, theta2, ax, polygons=[]) for theta1, theta2 in pairs]
-    distances = np.array([find_distance(x, arm) for x in arms])
+    distances = [find_distance(x, arm) for x in arms]
     sorted_indices = np.argsort(distances)
     return pairs[sorted_indices[:k]] 
 
 
 def find_smallest_distances_kd(pairs, ax, arm, k):
     tree = kd_tree(pairs.tolist())
-    nearest_points = k_nearest_neighbors(tree, (arm.theta1, arm.theta2), k)
+    nearest_points = k_nearest_neighbors(tree, (arm.theta1, arm.theta2), k, ax)
     return nearest_points
 
 # Distance between two arms is defined as sum of distance between their two joints
@@ -104,6 +108,7 @@ def find_distance(arm1, arm2):
 # Basically we set our arm to be at the target configuration, and then we search other configurations in "arm_configs.npy"
 # To find the k nearest neighbors with a linear search
 if __name__=='__main__':
+    start_time = time.time()
     # This code just gets us the name of the map from the command line
     parser = argparse.ArgumentParser(description="arm_2.py will find the two configurations in the file that are closest to the target")
     parser.add_argument('--configs', required=True, help='Path to the config file (e.g., "arm_configs.npy")')
@@ -118,10 +123,9 @@ if __name__=='__main__':
     planar_arm.theta1, planar_arm.theta2 = float(param1), float(param2)
     planar_arm.re_orient()
     planar_arm.add_arm('b') # Original Target Arm
-    configs = np.load(args.configs)
+    configs = np.load(args.configs)[:10]
     param1, param2 = args.target
     smallest_distances = find_smallest_distances_kd(configs, ax, planar_arm, int(args.k))
-    print(smallest_distances)
     count = 0
     for theta1, theta2 in smallest_distances:
         planar_arm.theta1, planar_arm.theta2 = theta1, theta2
@@ -138,6 +142,7 @@ if __name__=='__main__':
     planar_arm.theta1, planar_arm.theta2 = float(param1), float(param2)
     planar_arm.re_orient()
     planar_arm.add_arm('k')
+    print("--- %s seconds ---" % (time.time() - start_time))
     show_scene(ax)
 
     
