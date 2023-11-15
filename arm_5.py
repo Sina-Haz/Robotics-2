@@ -68,6 +68,25 @@ def collides(planar_arm: Arm_Controller, config):
     planar_arm.re_orient()
     return any(planar_arm.check_arm_collisions())
 
+# def interpolate(start, goal, resolution):
+#     # Get equation for the line as such: y - y1 = m(x - x1), solve for m
+#     x1,y1 = start
+#     x2,y2 = goal
+#     slope = (y2-y1)/(x2-x1)
+#     points = []
+#     num_points = abs(int((x2-x1)/resolution + 1))
+#     xs = [(x1 + i*resolution) for i in range(num_points)]
+
+#     for x_i in xs:
+#         y_i = slope*(x_i - x1) + y1
+#         points.append((x_i, y_i))
+
+#     # Ensure that the last point is the goal
+#     if points and points[-1] != goal:
+#         points.append(goal)
+
+#     return points
+
 
 # Returns a graph in adjacency list representation
 def PRM(iters: int, neighbors: Callable, k: int, sampler: Callable, robot: object, collides: Callable, dist_fn: Callable,
@@ -121,7 +140,7 @@ def prm_animation_fn(config, edges, iters, ax):
         plt.plot([x1,x2], [y1,y2], c='g')
     if iters % 50 == 0:
         ax.figure.canvas.draw()
-        # plt.pause(1e-6)
+        plt.pause(1e-6)
 
 
 # Assumes a graph which is a hashmap of Roadmap_Node objects
@@ -175,7 +194,7 @@ if __name__ == '__main__':
 
 
     planar_arm = Arm_Controller(args.start[0],args.start[1], ax = create_plot(), polygons = poly_map)
-    graph = PRM(100, get_k_neighbors, 3, sample, planar_arm, collides, 
+    graph = PRM(150, get_k_neighbors, 3, sample, planar_arm, collides, 
                 find_distance, interpolate, tuple(args.start), tuple(args.goal), [-pi, pi], np.radians(8), prm_animation_fn)
     
     var, path = A_star(tuple(args.start),tuple(args.goal), graph, find_distance)
@@ -195,9 +214,8 @@ if __name__ == '__main__':
             planar_arm.ax.cla()
             planar_arm.draw_arm()
             planar_arm.ax.figure.canvas.draw()
-            plt.pause(1e-3)
+            plt.pause(.01)
         # plt.close()
-    print(f'goal is: {args.goal}, final position is: {(planar_arm.theta1, planar_arm.theta2)}')
     print('finished')
         
 

@@ -141,6 +141,7 @@ class Car:
         else:
             animation = FuncAnimation(self.fig, self.update_animation_waypoints, fargs=(waypoints,), init_func=self.init_animation, blit=True, frames = frames, interval = interval,repeat=False)
         plt.show()
+
         
     # Add this method to update the animation at each frame
     def update_animation(self, frame):

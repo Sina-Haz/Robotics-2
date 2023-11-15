@@ -8,6 +8,7 @@ from rigid_body_3 import reposition_car, interpolate
 from rigid_body_1 import make_rigid_body
 import argparse
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 # samples random configuration (x,y,theta)
 def sample():
@@ -99,7 +100,7 @@ if __name__ == '__main__':
     rig_body.car.set_angle(degrees(args.start[2]))
     rig_body.set_obstacles(poly_map)
 
-    graph = PRM(100, get_k_neighbors, 3, sample, rig_body, collides, find_distance, interpolate,
+    graph = PRM(300, get_k_neighbors, 3, sample, rig_body, collides, find_distance, interpolate,
                 tuple(args.start), tuple(args.goal), (0, 2), 0.05, prm_animation_fn)
     print('PRM finished')
     plt.close()
@@ -108,6 +109,16 @@ if __name__ == '__main__':
     rig_body2 = CarController(ax = create_plot(), car = make_rigid_body((args.start[:2])), obstacles=[])
     rig_body2.car.set_angle(degrees(args.start[2]))
     rig_body2.set_obstacles(poly_map)
+
+    def update(frame, discretized_pts, rig_body):
+        pt = discretized_pts[frame]
+        reposition_car(pt, rig_body)
+        rig_body.ax.cla()
+        rig_body.ax.set_ylim([0, 2])
+        rig_body.ax.set_xlim([0, 2])
+        rig_body.ax.add_patch(rig_body.car)
+        rig_body.set_obstacles(rig_body.obstacles)
+
     
     var, path = A_star(tuple(args.start),tuple(args.goal), graph, find_distance)
     if var:
@@ -118,16 +129,20 @@ if __name__ == '__main__':
             road_to_next = graph[curr].roads[next]
             all_points += road_to_next
         all_points.append(path[-1])
-        for pt in all_points:
-            reposition_car(pt, rig_body2)
-            rig_body2.ax.cla()
-            rig_body2.ax.set_ylim([0,2])
-            rig_body2.ax.set_xlim([0,2])
-            rig_body2.ax.add_patch(rig_body2.car)
-            rig_body2.set_obstacles(rig_body2.obstacles)
-            plt.draw()
-            plt.pause(1e-4)
-            rig_body2.ax.figure.canvas.draw()
+        # for pt in all_points:
+        #     reposition_car(pt, rig_body2)
+        #     rig_body2.ax.cla()
+        #     rig_body2.ax.set_ylim([0,2])
+        #     rig_body2.ax.set_xlim([0,2])
+        #     rig_body2.ax.add_patch(rig_body2.car)
+        #     rig_body2.set_obstacles(rig_body2.obstacles)
+        #     plt.draw()
+        #     plt.pause(1e-4)
+        #     rig_body2.ax.figure.canvas.draw()
+        ani = FuncAnimation(rig_body2.fig, update, frames=len(all_points),
+                fargs=(all_points, rig_body2), interval=100, blit=False, repeat=False)
+        ani.save('videos/rigid_body2.5-4.mp4', 'ffmpeg', fps=30)
+        plt.show()
     else:
         print('no path exists')
     print('finished')

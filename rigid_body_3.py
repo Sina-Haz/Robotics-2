@@ -5,6 +5,7 @@ from create_scene import create_plot, show_scene
 from rigid_body_1 import make_rigid_body
 from planar_arm import angle_mod
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 def get_slope_vector(pt1, pt2):
     direction = [x2 - x1 for x1,x2 in zip(pt1, pt2)]
@@ -57,15 +58,29 @@ if __name__ == '__main__':
     plt.close('all')
     rig_body = CarController(ax = create_plot(), car = make_rigid_body((args.start[:2])), obstacles=[])
     rig_body.car.set_angle(degrees(args.start[2]))
-    for pt in discretized_pts:
+    # for pt in discretized_pts:
+    #     reposition_car(pt, rig_body)
+    #     rig_body.ax.cla()
+    #     rig_body.ax.set_ylim([0,2])
+    #     rig_body.ax.set_xlim([0,2])
+    #     rig_body.ax.add_patch(rig_body.car)
+    #     plt.draw()
+    #     plt.pause(.1)
+    #     rig_body.ax.figure.canvas.draw()
+
+    def update(frame, discretized_pts, rig_body):
+        pt = discretized_pts[frame]
         reposition_car(pt, rig_body)
         rig_body.ax.cla()
-        rig_body.ax.set_ylim([0,2])
-        rig_body.ax.set_xlim([0,2])
+        rig_body.ax.set_ylim([0, 2])
+        rig_body.ax.set_xlim([0, 2])
         rig_body.ax.add_patch(rig_body.car)
-        plt.draw()
-        plt.pause(.1)
-        rig_body.ax.figure.canvas.draw()
+
+    ani = FuncAnimation(rig_body.fig, update, frames=len(discretized_pts),
+                    fargs=(discretized_pts, rig_body), interval=100, blit=False, repeat=False)
+    ani.save('videos/rigid_body2.3-3.mp4', 'ffmpeg', fps=30)
+
+    plt.show()
     print('finished')
     
 

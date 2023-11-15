@@ -48,6 +48,7 @@ def interpolate(start, goal, resolution):
 
 
 
+
 # Usage: python3 arm_3.py --start 0 0 --goal 2 2
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arm_3 will interpolate points from start to goal configurations and show the arm at these points')
@@ -67,14 +68,14 @@ if __name__ == '__main__':
     # print('finished')
 
     planar_arm = Arm_Controller(args.start[0], args.start[1])
-    planar_arm.draw_arm()
-    for pt in discretized_pts:
-        print(pt)
-        planar_arm.set_joint_angles(pt)
-        planar_arm.re_orient()
-        planar_arm.ax.cla()
-        planar_arm.draw_arm()
-        planar_arm.ax.figure.canvas.draw()
+    # planar_arm.draw_arm()
+    # for pt in discretized_pts:
+    #     print(pt)
+    #     planar_arm.set_joint_angles(pt)
+    #     planar_arm.re_orient()
+    #     planar_arm.ax.cla()
+    #     planar_arm.draw_arm()
+    #     planar_arm.ax.figure.canvas.draw()
     # # plt.close()
 
     # Set up the figure and axis for animation
@@ -82,15 +83,16 @@ if __name__ == '__main__':
     # ax.set_aspect('equal', 'box')  # Adjust as needed
 
     # Function to update the animation at each frame
-    # def update(frame):
-    #     planar_arm.ax.cla()
-    #     joint_angles = discretized_pts[frame]
-    #     planar_arm.set_joint_angles(joint_angles)
-    #     planar_arm.re_orient()
-    #     planar_arm.draw_arm()
+    def update(frame):
+        planar_arm.ax.cla()
+        joint_angles = discretized_pts[frame]
+        planar_arm.set_joint_angles(joint_angles)
+        planar_arm.re_orient()
+        planar_arm.draw_arm()
 
-    # # Create the animation
-    # animation = FuncAnimation(planar_arm.ax.figure, update, frames=len(discretized_pts), interval=100, repeat=False)
+    # Create the animation
+    anim = FuncAnimation(planar_arm.ax.figure, update, frames=len(discretized_pts), interval=100, repeat=False)
+    # anim.save('videos/arm1.3-3.gif', writer='pillow', fps=30)
 
     # Display the animation
     plt.show()
