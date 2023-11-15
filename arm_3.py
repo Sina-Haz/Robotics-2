@@ -7,28 +7,48 @@ from matplotlib.animation import FuncAnimation
 import matplotlib.pyplot as plt
 from math import pi
 
-# Interpolate points on line segment from start to goal given some small resolution as a step size
-def interpolate(start, goal, resolution):
-    # Get equation for the line as such: y - y1 = m(x - x1), solve for m
-    x1,y1 = start
-    x2,y2 = goal
-    slope = (y2-y1)/(x2-x1)
-    points = []
-    num_points = abs(int((x2-x1)/resolution + 1))
-    xs = [(x1 + i*resolution)%(2*pi) for i in range(num_points)] # changed
+def get_theta_in_range(theta):
+    # Use wrap around to keep theta in range [-pi, pi]
+    if theta > pi:
+        theta -= 2*pi
+    elif theta < -pi:
+        theta += 2*pi
+    return theta
 
-    for x_i in xs:
-        y_i = slope*(x_i - x1) + y1
-        y_i = y_i % (2*pi) # new
+def interpolate(start, goal, resolution):
+    x1, y1 = start
+    x2, y2 = goal
+
+    # Calculate the angular difference between start and goal
+    angle_diff = get_theta_in_range(y2 - y1)
+
+    # Determine the sign of rotation (clockwise or counterclockwise)
+    sign = 1 if angle_diff >= 0 else -1
+
+    # Calculate the total number of steps needed
+    num_steps = int(abs(angle_diff) / resolution) + 1
+
+    # Calculate the angular step size
+    angle_step = angle_diff / num_steps
+
+    # Initialize the list of points
+    points = [start]
+
+    # Generate interpolated points
+    for i in range(1, num_steps):
+        x_i = get_theta_in_range(x1 + i * resolution)
+        y_i = get_theta_in_range(y1 + i * angle_step * sign)
         points.append((x_i, y_i))
-    
-    if len(points)!=0 and points[-1] != goal:
+
+    # Ensure that the last point is the goal
+    if points[-1] != goal:
         points.append(goal)
+
     return points
 
 
 
-# Usage: python3 arm_3.py --start 3 0.5 --goal 2 2
+# Usage: python3 arm_3.py --start 0 0 --goal 2 2
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arm_3 will interpolate points from start to goal configurations and show the arm at these points')
     parser.add_argument('--start', nargs = 2, type=float, required=True, help='Starting configuration, give two floats in radians')
@@ -55,5 +75,23 @@ if __name__ == '__main__':
         planar_arm.ax.cla()
         planar_arm.draw_arm()
         planar_arm.ax.figure.canvas.draw()
-    # plt.close()
+    # # plt.close()
+
+    # Set up the figure and axis for animation
+    # fig, ax = plt.subplots()
+    # ax.set_aspect('equal', 'box')  # Adjust as needed
+
+    # Function to update the animation at each frame
+    # def update(frame):
+    #     planar_arm.ax.cla()
+    #     joint_angles = discretized_pts[frame]
+    #     planar_arm.set_joint_angles(joint_angles)
+    #     planar_arm.re_orient()
+    #     planar_arm.draw_arm()
+
+    # # Create the animation
+    # animation = FuncAnimation(planar_arm.ax.figure, update, frames=len(discretized_pts), interval=100, repeat=False)
+
+    # Display the animation
+    plt.show()
     print('finished')
