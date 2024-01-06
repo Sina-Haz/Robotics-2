@@ -201,7 +201,7 @@ def car_graph(ax, waypoints,start, obstacles, t):
     car.start_animation(len(waypoints), 500, waypoints)
     
     
-
+# Usage: python3 car_2.py --start 0.5 0.25 0 --goal 1.75 1.5 0.0 --map "rigid_polygons.npy"
 if __name__=='__main__':
     # This code gets us the inputs from the command line
     parser = argparse.ArgumentParser(description="arm_2.py will find the two configurations in the file that are closest to the target")
